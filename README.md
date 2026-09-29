@@ -1,5 +1,7 @@
 # Videojuego 2D: el recolector
 
+Hiram Agustín Acevedo López · Licenciatura en Desarrollo de Sistemas Web
+
 Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basura recorre la calle detrás del camión; cada entrega de la unidad agrega una parte del juego sobre este mismo proyecto.
 
 ## Abrir el proyecto
@@ -19,16 +21,20 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 
 ## La escena y el personaje (entrega 3.1)
 
-- `Grid > Suelo`: Tilemap de la calle, pintado con la paleta `Assets/Arte/Paleta/Calle.prefab` (Window > 2D > Tile Palette).
-- `Fondo`: fachadas de la calle, repetidas a lo largo.
-- `Main Camera`: ortográfica; encuadra la calle y al personaje.
-- `Recolector`: SpriteRenderer, Animator y `RecolectorControl`.
+- `Main Camera`: cámara ortográfica con Pixel Perfect Camera (URP 2D), resolución de referencia 640x360 y 32 píxeles por unidad. Siempre muestra 640x360 píxeles de arte; a 1920x1080 cada píxel se ve a 3x. Encuadra las fachadas, la banqueta y un poco de asfalto.
+- `Grid > Suelo`: Tilemap de la banqueta y el asfalto, con la paleta `Assets/Arte/Paleta/Calle.prefab` (Window > 2D > Tile Palette).
+- `Calle`: el script `CalleModular` encadena las fachadas de `Assets/Arte/Escenario/Modulos/` en orden aleatorio con semilla fija, pinta el suelo y repite el cielo hasta cubrir lo que ve la cámara más un margen; lo que queda atrás se recicla. Como la cámara todavía no se mueve, en esta entrega sólo llena la vista.
+- `Recolector`: SpriteRenderer, Animator y `RecolectorControl`, de pie sobre la banqueta.
 
-Los sprites del recolector salen de dos tiras (`Assets/Arte/Recolector/`) cortadas en modo Multiple, con el pivote en los pies. El controlador `Assets/Animaciones/Recolector.controller` tiene dos estados: Reposo (por defecto) y Correr, con transiciones en ambos sentidos sin Has Exit Time y el parámetro bool `corriendo`.
+Los sprites del recolector salen de tiras de cuadros del mismo tamaño (`Assets/Arte/Recolector/`), cortadas en modo Multiple con el pivote en los pies y filtro Point. El controlador `Assets/Animaciones/Recolector.controller` tiene dos estados: Reposo (por defecto) y Correr, con transiciones en ambos sentidos sin Has Exit Time y el parámetro bool `corriendo`.
 
 `Assets/Scripts/RecolectorControl.cs` lee el teclado con el Input System (`Keyboard.current`), pone `corriendo` en verdadero mientras hay una dirección pulsada y voltea al personaje con la escala en x.
 
 En esta entrega el personaje no se desplaza: cambia de animación y de orientación según la tecla. La física, el salto, la cámara que lo sigue y el movimiento por la calle llegan en las entregas siguientes.
+
+## Arte
+
+Todo el arte es original y está hecho para este proyecto. El recolector está dibujado pixel por pixel: 4 cuadros de reposo y 8 de carrera de 64x64, con 17 colores. Las fachadas, el suelo, el cielo, el camión, el perro y la moneda de peso son pixel art hecho con código, sin recursos descargados.
 
 ## Qué se versiona
 

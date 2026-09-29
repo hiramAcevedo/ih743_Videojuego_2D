@@ -1,31 +1,10 @@
 fileFormatVersion: 2
-guid: 945281812610f43108a9fb4dd0f182a3
+guid: 737ac48761f7b4143bf86e6ae5d1d4d8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5440527732518414842
-    second: reposo_0
-  - first:
-      213: -3033174415496722481
-    second: reposo_1
-  - first:
-      213: 697994719066047815
-    second: reposo_2
-  - first:
-      213: 8375442051847133188
-    second: reposo_3
-  - first:
-      213: -1969187989136980935
-    second: reposo_4
-  - first:
-      213: -7087602464663075750
-    second: reposo_5
-  - first:
-      213: 6059501812074480171
-    second: reposo_6
-  - first:
-      213: -3700729124835140875
-    second: reposo_7
+      213: -8392539988274434838
+    second: vecindad_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -67,11 +46,11 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 9
-  spritePivot: {x: 0.5, y: 0}
+  spritePivot: {x: 0, y: 0}
   spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 0
@@ -134,89 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: reposo_0
+      name: vecindad_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 64
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+        width: 256
+        height: 242
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 60614983adc5f74b0800000000000000
-      internalID: -5440527732518414842
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: reposo_1
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 0
-        width: 64
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: fc7c38680fff7e5d0800000000000000
-      internalID: -3033174415496722481
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: reposo_2
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 0
-        width: 64
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 745c705bf76cfa900800000000000000
-      internalID: 697994719066047815
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: reposo_3
-      rect:
-        serializedVersion: 2
-        x: 192
-        y: 0
-        width: 64
-        height: 64
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4089731db2c8b3470800000000000000
-      internalID: 8375442051847133188
+      spriteID: aec24a3a855b78b80800000000000000
+      internalID: -8392539988274434838
       vertices: []
       indices: 
       edges: []
@@ -225,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 8e28d84e4c85e4cd18fd6adcbba67bff
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -235,10 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      reposo_0: -5440527732518414842
-      reposo_1: -3033174415496722481
-      reposo_2: 697994719066047815
-      reposo_3: 8375442051847133188
+      vecindad_0: -8392539988274434838
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

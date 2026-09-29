@@ -72,7 +72,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 4096
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 0
@@ -118,8 +118,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 256
+        height: 96
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,28 +130,6 @@ TextureImporter:
       bones: []
       spriteID: 83190db8cf3e26100800000000000000
       internalID: 99892815572537656
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: suelo_1
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 0
-        width: 32
-        height: 32
-      alignment: 9
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3156ed45d71da4bd994703ae660f2a44
-      internalID: 201476025
       vertices: []
       indices: 
       edges: []
@@ -171,7 +149,6 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       suelo_0: 99892815572537656
-      suelo_1: 201476025
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
