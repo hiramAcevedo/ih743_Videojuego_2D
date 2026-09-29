@@ -4,6 +4,8 @@ Hiram Agustín Acevedo López · Licenciatura en Desarrollo de Sistemas Web
 
 Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basura recorre la calle detrás del camión; cada entrega de la unidad agrega una parte del juego sobre este mismo proyecto.
 
+![El recolector corriendo en la escena Calle](docs/calle-correr.png)
+
 ## Abrir el proyecto
 
 1. Clona el repositorio.
@@ -34,7 +36,7 @@ En esta entrega el personaje no se desplaza: cambia de animación y de orientaci
 
 ## Arte
 
-Todo el arte es original y está hecho para este proyecto. El recolector está dibujado pixel por pixel: 4 cuadros de reposo y 8 de carrera de 64x64, con 17 colores. Las fachadas, el suelo, el cielo, el camión, el perro y la moneda de peso son pixel art hecho con código, sin recursos descargados.
+Todo el arte es original y está hecho para este proyecto. El recolector es pixel art de 128x128 por cuadro, editado en Aseprite: 8 cuadros de reposo y 12 de carrera, con los pies en la misma línea en todos los cuadros; se importa a 48 píxeles por unidad para quedar en proporción con las fachadas. Las fachadas, el suelo, el cielo, el camión, el perro y la moneda de peso son pixel art hecho con código, sin recursos descargados.
 
 ## Qué se versiona
 
