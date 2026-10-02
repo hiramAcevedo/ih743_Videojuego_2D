@@ -43,7 +43,11 @@ Las balas de este juego son dos prefabs que salen de la misma base, el script `P
 
 ![El recolector apunta con la mira para lanzar la bolsa](docs/calle-apunta.png)
 
-![La bolsa en el aire, lanzada hacia la derecha](docs/calle-lanza.png)
+![Trayectoria de la bolsa: sale de la mano hacia la mira, sube sobre la cabeza y cae en arco hasta salir de la vista](docs/trayectoria-bolsa.png)
+
+![Trayectoria de la botella: sale de la mano en línea recta, girando, hacia donde mira el recolector](docs/trayectoria-botella.png)
+
+Las dos imágenes juntan varios cuadros del mismo lanzamiento: el arco de la bolsa con la mira alta y la línea recta de la botella.
 
 - `Assets/Scripts/Proyectil.cs`: la base común. Cada prefab trae su configuración (rapidez, escala de gravedad, vida, giro y cuántos contactos aguanta); `Lanzar(direccion, sentido)` fija la velocidad inicial y la velocidad angular del Rigidbody2D, y la física 2D hace el resto. El proyectil desaparece al salir del encuadre de la cámara o al cumplir su vida. Otro objeto que vuele es un prefab nuevo con otros números.
 - `Assets/Prefabs/Bolsa.prefab`: sprite `bolsa.png` (24x24), Rigidbody2D con gravedad, CircleCollider2D (radio 0.19) con el material `Assets/Fisica/Bolsa.physicsMaterial2D` (restitución 0.5, fricción 0.4) y `Proyectil` a 7 unidades por segundo con giro de 200 grados por segundo. Se lanza como en Yoshi's Island: al sostener K aparece la mira (`Mira.cs`, hija del recolector), que oscila sola entre -10 y 70 grados delante de él, a 2.5 unidades de la mano, en ciclos de 1.2 segundos; al soltar K la bolsa sale hacia la mira y la gravedad la curva. Con la mira alta sube por encima de la cabeza y cae unas cuatro unidades adelante; con la mira baja es un tiro corto y tendido. En esta entrega el suelo no tiene collider, así que la bolsa atraviesa la banqueta, sigue cayendo y desaparece al salir de la vista. Conserva su collider, su material y dos rebotes configurados para la 3.3: el rebote llega con la colisión del suelo.
