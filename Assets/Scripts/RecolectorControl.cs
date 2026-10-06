@@ -1,16 +1,29 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Estructura del personaje: lee el teclado y elige la animación de estado.
+// Estructura del personaje: lee el teclado, elige la animación de estado, salta y lanza.
 // Flecha derecha o D: Correr mirando a la derecha. Flecha izquierda o A: Correr mirando
 // a la izquierda. Sin dirección (o las dos a la vez): Reposo, sin cambiar hacia dónde mira.
+// W o flecha arriba: salta, sólo con los pies en el suelo.
 // K sostenida: aparece la mira y oscila delante del recolector; al soltar K sale la bolsa hacia la mira.
 // Barra espaciadora: sale la botella, recta y horizontal, hacia donde mira.
-// El desplazamiento, la física y el salto del recolector se agregan en las entregas siguientes.
-[RequireComponent(typeof(Animator))]
+// La física es la de Unity 2D: un Rigidbody2D dinámico con gravedad y la rotación congelada, y una
+// CapsuleCollider2D del tamaño del cuerpo con la base en los pies, que se apoya en el collider del suelo.
+// Todavía no se desplaza a los lados: las teclas de dirección sólo animan y voltean.
+[RequireComponent(typeof(Animator), typeof(Rigidbody2D), typeof(CapsuleCollider2D))]
 public class RecolectorControl : MonoBehaviour
 {
     static readonly int Corriendo = Animator.StringToHash("corriendo");
+    // Más rápido que esto hacia arriba ya va despegando, aunque el rayo todavía alcance el suelo.
+    const float VelocidadDespegue = 0.5f;
+
+    [Header("Salto")]
+    [Tooltip("Impulso hacia arriba al saltar. Con masa 1 es la velocidad de salida en unidades por segundo.")]
+    [SerializeField] float fuerzaSalto = 5f;
+    [Tooltip("Capas que cuentan como suelo para el rayo: la del Tilemap Grid > Suelo.")]
+    [SerializeField] LayerMask capaSuelo;
+    [Tooltip("Cuánto llega el rayo por debajo de los pies, en unidades.")]
+    [SerializeField] float margenSuelo = 0.1f;
 
     [Header("Lanzar")]
     [Tooltip("Prefab de la bolsa de basura: sale hacia la mira, con gravedad y rebotes.")]
@@ -23,15 +36,23 @@ public class RecolectorControl : MonoBehaviour
     [SerializeField] Mira mira;
 
     Animator animator;
+    Rigidbody2D cuerpo;
+    CapsuleCollider2D capsula;
 
     // -1 izquierda, 0 sin dirección, 1 derecha; como Input.GetAxisRaw("Horizontal").
     public float Horizontal { get; private set; }
     // Ángulo de la mira en el último lanzamiento de bolsa (grados sobre la horizontal, hacia donde mira).
     public float UltimoAngulo { get; private set; }
+    // Si en este cuadro tiene los pies en el suelo: el rayo lo toca y no va despegando.
+    public bool EnSuelo { get; private set; }
+    // Saltos dados desde que empezó la escena.
+    public int Saltos { get; private set; }
 
     void Start()
     {
         animator = GetComponent<Animator>();
+        cuerpo = GetComponent<Rigidbody2D>();
+        capsula = GetComponent<CapsuleCollider2D>();
     }
 
     void Update()
@@ -51,9 +72,17 @@ public class RecolectorControl : MonoBehaviour
             transform.localScale = new Vector3(1f, 1f, 1f);
         }
 
+        EnSuelo = TocaSuelo();
+
         if (teclado == null)
         {
             return;
+        }
+
+        // El salto: W o la flecha arriba, en el cuadro en que se presiona, y sólo con los pies en el suelo.
+        if ((teclado.wKey.wasPressedThisFrame || teclado.upArrowKey.wasPressedThisFrame) && EnSuelo)
+        {
+            Saltar();
         }
 
         // Una botella por pulsación: el evento de la tecla, no mientras se mantiene apretada.
@@ -78,6 +107,32 @@ public class RecolectorControl : MonoBehaviour
         }
     }
 
+    // Como en el tutorial: un rayo hacia abajo; si toca el suelo, se puede saltar. Sale del centro de la
+    // cápsula y llega margenSuelo por debajo de los pies. Sólo ve la capa del suelo, así que no se detecta
+    // a sí mismo ni a la bolsa o la botella (el tutorial lo resuelve apagando Queries Start In Colliders).
+    // Después del impulso, mientras la física no da su siguiente paso, el rayo todavía alcanza el suelo: la
+    // velocidad hacia arriba dice que ya va en el aire. Debug.DrawRay lo dibuja en la vista de escena.
+    bool TocaSuelo()
+    {
+        Bounds caja = capsula.bounds;
+        Vector2 origen = caja.center;
+        float distancia = caja.extents.y + margenSuelo;
+        bool toca = Physics2D.Raycast(origen, Vector2.down, distancia, capaSuelo).collider != null
+            && cuerpo.linearVelocity.y <= VelocidadDespegue;
+        Debug.DrawRay(origen, Vector2.down * distancia, toca ? Color.green : Color.red);
+        return toca;
+    }
+
+    // AddForce hacia arriba, como en el tutorial, aplicada como impulso: la velocidad de salida es
+    // fuerzaSalto entre la masa y no depende del paso de la física. Se parte de velocidad vertical cero
+    // para que todos los saltos suban lo mismo, aunque la tecla llegue en el último instante de una caída.
+    void Saltar()
+    {
+        cuerpo.linearVelocity = new Vector2(cuerpo.linearVelocity.x, 0f);
+        cuerpo.AddForce(Vector2.up * fuerzaSalto, ForceMode2D.Impulse);
+        Saltos++;
+    }
+
     int Sentido() => transform.localScale.x >= 0f ? 1 : -1;
 
     // Como en el tutorial, la dirección depende del signo de la escala en x y el proyectil nace en el
@@ -92,12 +147,12 @@ public class RecolectorControl : MonoBehaviour
         GameObject copia = Instantiate(prefab, puntoDisparo.position, Quaternion.identity);
         var colliderCopia = copia.GetComponent<Collider2D>();
 
-        // No choca con el recolector (cuando tenga colliders, en la 3.3) ni con los otros proyectiles.
+        // No choca con el recolector (su cápsula) ni con los otros proyectiles.
         foreach (var propio in GetComponentsInChildren<Collider2D>())
         {
             Physics2D.IgnoreCollision(colliderCopia, propio);
         }
-        foreach (var otro in FindObjectsByType<Proyectil>(FindObjectsSortMode.None))
+        foreach (var otro in FindObjectsByType<Proyectil>())
         {
             if (otro.gameObject != copia)
             {
