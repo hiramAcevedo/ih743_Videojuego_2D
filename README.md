@@ -20,7 +20,7 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 | Flecha derecha o D | Correr, mirando a la derecha |
 | Flecha izquierda o A | Correr, mirando a la izquierda |
 | Ninguna, o las dos direcciones a la vez | Reposo, mirando hacia la última dirección |
-| W o flecha arriba | Salta, sólo con los pies en el suelo (un salto por pulsación) |
+| W o flecha arriba | Salta con los pies en el suelo y, en el aire, una vez más: el doble salto (un salto por pulsación) |
 | K (sostenida) | Apunta: la mira oscila delante del recolector |
 | K (al soltar) | Lanza la bolsa hacia la mira (una por lanzamiento) |
 | Barra espaciadora | Lanza la botella, recta hacia donde mira (una por pulsación) |
@@ -36,7 +36,7 @@ Los sprites del recolector salen de tiras de cuadros del mismo tamaño (`Assets/
 
 `Assets/Scripts/RecolectorControl.cs` lee el teclado con el Input System (`Keyboard.current`), pone `corriendo` en verdadero mientras hay una dirección pulsada y voltea al personaje con la escala en x.
 
-Por ahora el personaje no se desplaza: cambia de animación y de orientación según la tecla, lanza la bolsa y la botella (entrega 3.2) y salta con la física 2D (entrega 3.3). La cámara lo sigue desde la entrega 3.4; el movimiento por la calle llega en la 3.5.
+Por ahora el personaje no se desplaza: cambia de animación y de orientación según la tecla, lanza la bolsa y la botella (entrega 3.2) y salta con la física 2D (entrega 3.3), con doble salto desde la 3.4. La cámara lo sigue desde la entrega 3.4; el movimiento por la calle llega en la 3.5.
 
 ## Los prefabs (entrega 3.2)
 
@@ -83,16 +83,19 @@ La cámara que sigue al recolector llegó en la 3.4 y el desplazamiento a los la
 
 ## La cámara (entrega 3.4)
 
-La cámara sigue al recolector como en el tutorial (34:07): en cada cuadro toma su posición en x y deja la altura de la escena, así que al saltar no se mueve y el recolector sube en la pantalla. Con el recolector quieto la vista es la de la entrega 3.3, píxel por píxel. Moverse a los lados con el teclado llega en la 3.5, así que las imágenes salen de una prueba que le da velocidad al cuerpo del recolector desde código; en el editor se ve cambiando su posición en x en el Inspector durante Play, y la cámara aparece donde lo pongas.
+La cámara sigue al recolector como en el tutorial (34:07): en cada cuadro toma su posición en x. En y lo deja subir hasta 1.3 unidades sin moverse, un poco más de lo que alcanza un salto (1.22), así que con el salto sencillo se queda quieta y el recolector sube en la pantalla. Con el doble salto, W o la flecha arriba otra vez en el aire, pasa de esa altura: la cámara sube con él y al aterrizar regresa a su altura de la escena. Con el recolector quieto la vista es la de la entrega 3.3, píxel por píxel. Moverse a los lados con el teclado llega en la 3.5; el seguimiento en x se prueba dándole velocidad al cuerpo del recolector desde código, y en el editor se ve cambiando su posición en x en el Inspector durante Play.
 
-![La cámara sigue al recolector: parte quieto, corre a la derecha, salta sin dejar de correr, se detiene y corre a la izquierda](docs/camara-sigue.gif)
+![El salto sencillo y el doble salto: con el primero la cámara no se mueve; con el segundo sube con el recolector y regresa cuando aterriza](docs/camara-sigue.gif)
+
+![Reposo, el salto sencillo en lo más alto, el doble salto en lo más alto y de vuelta en el suelo: la cámara sólo sube con el doble salto, de y = 4 a y = 5.15, y regresa a y = 4](docs/camara-doble-salto.png)
 
 ![El recolector corre, se detiene y corre al otro lado: en los seis cuadros la x de la cámara es la suya y él queda en el centro de la pantalla](docs/camara-recorrido.png)
 
-- `Assets/Scripts/CamaraSigue.cs`: el script de cámara del tutorial (34:07), con el recolector en lugar de John. En cada cuadro pone la x de la cámara igual a la de su objetivo y no toca la y ni la z, que son las de la escena. Corre en `LateUpdate` y antes que `CalleModular` (el tutorial usa `Update`): así lee la posición del recolector ya interpolada en ese cuadro y la calle se arma con ella. Si el objetivo desaparece (46:40), la cámara se queda donde está.
+- `Assets/Scripts/CamaraSigue.cs`: el script de cámara del tutorial (34:07), con el recolector en lugar de John. En cada cuadro pone la x de la cámara igual a la de su objetivo. La y se queda en la de la escena mientras el recolector no suba más de `alturaLibre` (1.3 unidades, en el Inspector); arriba de eso la cámara va a la misma distancia de él, redondeada a píxeles enteros (259 px), y nunca baja de su altura de la escena. La z no se toca. Corre en `LateUpdate` y antes que `CalleModular` (el tutorial usa `Update`): así lee la posición del recolector ya interpolada en ese cuadro y la calle se arma con ella. Si el objetivo desaparece (46:40), la cámara se queda donde está.
 - `Main Camera`: sigue la Pixel Perfect Camera de la 3.2 (96 píxeles por unidad, referencia 1920x1080), que fija el tamaño (1080 / 2 / 96 = 5.625): una vista de 20 por 11.25 unidades donde el recolector ocupa el 19 % de la altura y, con su salto, el 30 %. El tutorial baja `Size` a mano (8:07); aquí no se toca, y la última figura compara esta distancia con una al doble y otra a la mitad.
 - Sin retraso: en un recorrido de x = -29.5 a x = 29.5 y de regreso a 4.9 unidades por segundo (1 920 cuadros), la cámara tuvo la x del recolector en todos los cuadros, también al detenerse y a 30, 60 y 144 cuadros por segundo.
-- Sin temblor: la Pixel Perfect Camera dibuja la cámara y cada sprite en el píxel más cercano a su posición; con la misma x caen en el mismo y el recolector no se mueve en la pantalla (su columna en la imagen no cambió ni una vez en los 720 cuadros que mide la prueba, a ocho velocidades y en los dos sentidos).
+- Sin temblor: la Pixel Perfect Camera dibuja la cámara y cada sprite en el píxel más cercano a su posición; con la misma x caen en el mismo y el recolector no se mueve en la pantalla (su columna en la imagen no cambió ni una vez en los 720 cuadros que mide la prueba, a ocho velocidades y en los dos sentidos). Cuando lo sigue en y, la distancia entre los dos es un número entero de píxeles en cada cuadro, así que pasa lo mismo.
+- `Assets/Scripts/RecolectorControl.cs`: el doble salto. Con W o la flecha arriba en el aire salta una vez más (`saltosEnElAire` = 1) y al tocar el suelo se recarga; un tercer toque en el aire ya no salta. El segundo salto parte de velocidad vertical cero, como el primero, así que sube lo mismo: en la prueba los dos juntos suben 2.44 unidades, la cámara sube 1.14 (110 px) y en lo más alto quedan 0.49 unidades de suelo a la vista.
 - `Calle`: `CalleModular` ya leía la posición de la cámara. En ese recorrido la vista tuvo fachadas, suelo y cielo en todos los cuadros, la calle no pasó de 7 piezas de fachada ni de 6 columnas de suelo, y al volver están las mismas fachadas en el mismo lugar. La botella sigue desapareciendo al salir de la vista (con la cámara en x = 24, a 10.8 unidades de ella).
 
 ![El salto sin dejar de correr, de izquierda a derecha: la cámara copia la x y su altura no cambia (y = 4), mientras el recolector sube y baja en la pantalla](docs/camara-salto.png)

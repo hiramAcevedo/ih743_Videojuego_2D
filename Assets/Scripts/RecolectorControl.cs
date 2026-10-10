@@ -4,7 +4,8 @@ using UnityEngine.InputSystem;
 // Estructura del personaje: lee el teclado, elige la animación de estado, salta y lanza.
 // Flecha derecha o D: Correr mirando a la derecha. Flecha izquierda o A: Correr mirando
 // a la izquierda. Sin dirección (o las dos a la vez): Reposo, sin cambiar hacia dónde mira.
-// W o flecha arriba: salta, sólo con los pies en el suelo.
+// W o flecha arriba: salta con los pies en el suelo y, ya en el aire, una vez más: el doble salto. Al volver a
+// tocar el suelo se recarga. El segundo salto parte de velocidad vertical cero, así que sube lo mismo que el primero.
 // K sostenida: aparece la mira y oscila delante del recolector; al soltar K sale la bolsa hacia la mira.
 // Barra espaciadora: sale la botella, recta y horizontal, hacia donde mira.
 // La física es la de Unity 2D: un Rigidbody2D dinámico con gravedad y la rotación congelada, y una
@@ -20,6 +21,8 @@ public class RecolectorControl : MonoBehaviour
     [Header("Salto")]
     [Tooltip("Impulso hacia arriba al saltar. Con masa 1 es la velocidad de salida en unidades por segundo.")]
     [SerializeField] float fuerzaSalto = 5f;
+    [Tooltip("Saltos que se pueden dar en el aire antes de volver a tocar el suelo. Con 1 es el doble salto; con 0, sólo el salto desde el suelo.")]
+    [SerializeField] int saltosEnElAire = 1;
     [Tooltip("Capas que cuentan como suelo para el rayo: la del Tilemap Grid > Suelo.")]
     [SerializeField] LayerMask capaSuelo;
     [Tooltip("Cuánto llega el rayo por debajo de los pies, en unidades.")]
@@ -38,6 +41,8 @@ public class RecolectorControl : MonoBehaviour
     Animator animator;
     Rigidbody2D cuerpo;
     CapsuleCollider2D capsula;
+    // Saltos dados en el aire desde la última vez que tocó el suelo.
+    int saltosAereos;
 
     // -1 izquierda, 0 sin dirección, 1 derecha; como Input.GetAxisRaw("Horizontal").
     public float Horizontal { get; private set; }
@@ -73,16 +78,29 @@ public class RecolectorControl : MonoBehaviour
         }
 
         EnSuelo = TocaSuelo();
+        if (EnSuelo)
+        {
+            saltosAereos = 0;
+        }
 
         if (teclado == null)
         {
             return;
         }
 
-        // El salto: W o la flecha arriba, en el cuadro en que se presiona, y sólo con los pies en el suelo.
-        if ((teclado.wKey.wasPressedThisFrame || teclado.upArrowKey.wasPressedThisFrame) && EnSuelo)
+        // El salto: W o la flecha arriba, en el cuadro en que se presiona. Con los pies en el suelo, el salto normal;
+        // en el aire, sólo si le queda un salto extra (el doble salto).
+        if (teclado.wKey.wasPressedThisFrame || teclado.upArrowKey.wasPressedThisFrame)
         {
-            Saltar();
+            if (EnSuelo)
+            {
+                Saltar();
+            }
+            else if (saltosAereos < saltosEnElAire)
+            {
+                saltosAereos++;
+                Saltar();
+            }
         }
 
         // Una botella por pulsación: el evento de la tecla, no mientras se mantiene apretada.
