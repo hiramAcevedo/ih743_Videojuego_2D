@@ -4,9 +4,9 @@ using UnityEngine.Tilemaps;
 
 // Calle modular: encadena fachadas en orden aleatorio con semilla fija, pinta el suelo en el Tilemap
 // y repite el cielo hasta cubrir lo que ve la cámara más un margen; lo que queda atrás se recicla.
-// Con la cámara quieta sólo llena la vista. Cuando la cámara siga al personaje, la calle avanza
-// sin fin con este mismo código. El orden depende sólo de la semilla y de la posición de cada
-// fachada, así que al regresar aparecen las mismas fachadas en el mismo lugar.
+// Con la cámara quieta sólo llena la vista. Como la cámara sigue al recolector (CamaraSigue), la
+// calle avanza sin fin con este mismo código. El orden depende sólo de la semilla y de la posición
+// de cada fachada, así que al regresar aparecen las mismas fachadas en el mismo lugar.
 [DisallowMultipleComponent]
 public class CalleModular : MonoBehaviour
 {
