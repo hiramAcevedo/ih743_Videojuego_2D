@@ -1,22 +1,29 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Estructura del personaje: lee el teclado, elige la animación de estado, salta y lanza.
-// Flecha derecha o D: Correr mirando a la derecha. Flecha izquierda o A: Correr mirando
-// a la izquierda. Sin dirección (o las dos a la vez): Reposo, sin cambiar hacia dónde mira.
+// Estructura del personaje: lee el teclado, elige la animación de estado, se desplaza, salta y lanza.
+// Flecha derecha o D: se desplaza a la derecha, mirando a la derecha, con la animación de Correr.
+// Flecha izquierda o A: lo mismo hacia la izquierda. Sin dirección (o las dos a la vez): se detiene
+// en Reposo, sin cambiar hacia dónde mira.
 // W o flecha arriba: salta con los pies en el suelo y, ya en el aire, una vez más: el doble salto. Al volver a
 // tocar el suelo se recarga. El segundo salto parte de velocidad vertical cero, así que sube lo mismo que el primero.
 // K sostenida: aparece la mira y oscila delante del recolector; al soltar K sale la bolsa hacia la mira.
 // Barra espaciadora: sale la botella, recta y horizontal, hacia donde mira.
 // La física es la de Unity 2D: un Rigidbody2D dinámico con gravedad y la rotación congelada, y una
 // CapsuleCollider2D del tamaño del cuerpo con la base en los pies, que se apoya en el collider del suelo.
-// Todavía no se desplaza a los lados: las teclas de dirección sólo animan y voltean.
+// El desplazamiento es el del tutorial (de 11:53 a 15:23): en cada paso de la física la velocidad en x del
+// Rigidbody2D es el eje horizontal por la rapidez; la y se deja a la gravedad y al salto. Sin aceleración:
+// arranca y se detiene al instante.
 [RequireComponent(typeof(Animator), typeof(Rigidbody2D), typeof(CapsuleCollider2D))]
 public class RecolectorControl : MonoBehaviour
 {
     static readonly int Corriendo = Animator.StringToHash("corriendo");
     // Más rápido que esto hacia arriba ya va despegando, aunque el rayo todavía alcance el suelo.
     const float VelocidadDespegue = 0.5f;
+
+    [Header("Movimiento")]
+    [Tooltip("Rapidez al desplazarse a los lados, en unidades por segundo. La velocidad en x es el eje horizontal por este número.")]
+    [SerializeField] float velocidad = 4f;
 
     [Header("Salto")]
     [Tooltip("Impulso hacia arriba al saltar. Con masa 1 es la velocidad de salida en unidades por segundo.")]
@@ -58,6 +65,13 @@ public class RecolectorControl : MonoBehaviour
         animator = GetComponent<Animator>();
         cuerpo = GetComponent<Rigidbody2D>();
         capsula = GetComponent<CapsuleCollider2D>();
+    }
+
+    // Como en el tutorial, la física se toca en FixedUpdate y no en Update. Sólo cambia la x de la velocidad: la y la
+    // siguen manejando la gravedad y el salto, así que en el aire el control es el mismo.
+    void FixedUpdate()
+    {
+        cuerpo.linearVelocity = new Vector2(Horizontal * velocidad, cuerpo.linearVelocity.y);
     }
 
     void Update()

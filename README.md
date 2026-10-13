@@ -17,9 +17,9 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 
 | Tecla | Qué hace |
 |---|---|
-| Flecha derecha o D | Correr, mirando a la derecha |
-| Flecha izquierda o A | Correr, mirando a la izquierda |
-| Ninguna, o las dos direcciones a la vez | Reposo, mirando hacia la última dirección |
+| Flecha derecha o D | Se desplaza a la derecha corriendo, mirando a la derecha (desde la entrega 3.5) |
+| Flecha izquierda o A | Se desplaza a la izquierda corriendo, mirando a la izquierda (desde la entrega 3.5) |
+| Ninguna, o las dos direcciones a la vez | Se detiene, en Reposo, mirando hacia la última dirección |
 | W o flecha arriba | Salta con los pies en el suelo y, en el aire, una vez más: el doble salto (un salto por pulsación) |
 | K (sostenida) | Apunta: la mira oscila delante del recolector |
 | K (al soltar) | Lanza la bolsa hacia la mira (una por lanzamiento) |
@@ -34,9 +34,9 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 
 Los sprites del recolector salen de tiras de cuadros del mismo tamaño (`Assets/Arte/Recolector/`), cortadas en modo Multiple con el pivote en los pies y filtro Point. El controlador `Assets/Animaciones/Recolector.controller` tiene dos estados: Reposo (por defecto) y Correr, con transiciones en ambos sentidos sin Has Exit Time y el parámetro bool `corriendo`.
 
-`Assets/Scripts/RecolectorControl.cs` lee el teclado con el Input System (`Keyboard.current`), pone `corriendo` en verdadero mientras hay una dirección pulsada y voltea al personaje con la escala en x.
+`Assets/Scripts/RecolectorControl.cs` lee el teclado con el Input System (`Keyboard.current`), pone `corriendo` en verdadero mientras hay una dirección pulsada y voltea al personaje con la escala en x. Desde la entrega 3.5 esa misma dirección mueve al cuerpo.
 
-Por ahora el personaje no se desplaza: cambia de animación y de orientación según la tecla, lanza la bolsa y la botella (entrega 3.2) y salta con la física 2D (entrega 3.3), con doble salto desde la 3.4. La cámara lo sigue desde la entrega 3.4; el movimiento por la calle llega en la 3.5.
+El personaje cambia de animación y de orientación según la tecla, lanza la bolsa y la botella (entrega 3.2), salta con la física 2D (entrega 3.3) y da el doble salto desde la 3.4; la cámara lo sigue desde la entrega 3.4 y se desplaza por la calle desde la 3.5.
 
 ## Los prefabs (entrega 3.2)
 
@@ -79,11 +79,11 @@ Cada cuadro lleva el tiempo desde que se presiona W y la altura de los pies. Con
 
 ![Rastro de la bolsa: sale de la mano, cae en la banqueta, da dos rebotes cada vez más bajos y desaparece](docs/rebote-bolsa.png)
 
-La cámara que sigue al recolector llegó en la 3.4 y el desplazamiento a los lados llega en la 3.5.
+La cámara que sigue al recolector llegó en la 3.4 y el desplazamiento a los lados, en la 3.5.
 
 ## La cámara (entrega 3.4)
 
-La cámara sigue al recolector como en el tutorial (34:07): en cada cuadro toma su posición en x. En y lo deja subir hasta 1.3 unidades sin moverse, un poco más de lo que alcanza un salto (1.22), así que con el salto sencillo se queda quieta y el recolector sube en la pantalla. Con el doble salto, W o la flecha arriba otra vez en el aire, pasa de esa altura: la cámara sube con él y al aterrizar regresa a su altura de la escena. Con el recolector quieto la vista es la de la entrega 3.3, píxel por píxel. Moverse a los lados con el teclado llega en la 3.5; el seguimiento en x se prueba dándole velocidad al cuerpo del recolector desde código, y en el editor se ve cambiando su posición en x en el Inspector durante Play.
+La cámara sigue al recolector como en el tutorial (34:07): en cada cuadro toma su posición en x. En y lo deja subir hasta 1.3 unidades sin moverse, un poco más de lo que alcanza un salto (1.22), así que con el salto sencillo se queda quieta y el recolector sube en la pantalla. Con el doble salto, W o la flecha arriba otra vez en el aire, pasa de esa altura: la cámara sube con él y al aterrizar regresa a su altura de la escena. Con el recolector quieto la vista es la de la entrega 3.3, píxel por píxel. Moverse a los lados con el teclado llegó en la 3.5; en esta entrega el seguimiento en x se probó dándole velocidad al cuerpo del recolector desde código.
 
 ![El salto sencillo y el doble salto: con el primero la cámara no se mueve; con el segundo sube con el recolector y regresa cuando aterriza](docs/camara-sigue.gif)
 
@@ -103,6 +103,21 @@ La cámara sigue al recolector como en el tutorial (34:07): en cada cuadro toma 
 ![La misma escena con la vista al doble de distancia, la elegida y a la mitad: el recolector ocupa el 10 %, el 19 % y el 39 % de la altura](docs/camara-encuadre.png)
 
 Al doble de distancia el recolector se pierde bajo un cielo vacío y la calle queda en una franja; a la mitad no cabe ni una fachada entera y su salto ocupa más de la mitad de la altura.
+
+## El movimiento del jugador (entrega 3.5)
+
+El recolector se desplaza por la calle con las flechas izquierda y derecha, o con A y D, como en el tutorial (11:53 a 15:23): en cada paso de la física la velocidad en x de su Rigidbody2D es el eje horizontal (-1, 0 o 1) por una rapidez de 4 unidades por segundo, y la velocidad en y se deja a la gravedad y al salto. Arranca y se detiene al instante, mira hacia donde va y corre con la animación de la 3.1; al soltar la tecla queda en Reposo. El salto, el doble salto, la mira, la bolsa y la botella siguen igual, y la cámara copia su x en cada cuadro.
+
+![El recolector corre con D, salta sin soltarla, se detiene y corre con la flecha izquierda; la cámara lo lleva en el centro](docs/movimiento.gif)
+
+![Seis cuadros del recorrido con el teclado: quieto, corriendo con D, saltando sin soltar D, detenido al soltar y corriendo con la flecha izquierda, con la posición y la velocidad de cada cuadro](docs/movimiento-recorrido.png)
+
+- `Assets/Scripts/RecolectorControl.cs`: un campo nuevo, `velocidad` (4 unidades por segundo, en el Inspector), y `FixedUpdate`, que pone `cuerpo.linearVelocity = new Vector2(Horizontal * velocidad, cuerpo.linearVelocity.y)`. `Horizontal` es el eje que el script ya leía en `Update` con el Input System desde la 3.1 (las flechas o A y D: -1, 0 o 1, como `Input.GetAxisRaw("Horizontal")` en el tutorial); la física se toca en `FixedUpdate` y no en `Update`, como explica el tutorial (13:49). El Rigidbody2D tiene la rotación congelada desde la 3.3, así que el recolector no se vuelca al avanzar (15:09).
+- Medido con el juego en marcha y un teclado virtual: con D, con A o con cada flecha avanza 3.92 unidades por segundo (los 0.08 que faltan son la fricción de la cápsula con la banqueta en cada paso de la física; en el aire lleva los 4), sin retroceder ni un cuadro, y las flechas dan la misma velocidad que las letras. Al soltar, el cuerpo avanza 0.08 unidades más y queda en cero; con las dos direcciones a la vez no se mueve. A 30, 60 y 144 cuadros por segundo recorre lo mismo.
+- Las colisiones de la 3.3 siguen: en un recorrido de 32 segundos (1 920 cuadros, de x = -23.5 a x = 23.5 y de regreso) los pies se mantuvieron en y = 0.005 en todos los cuadros y el rayo del suelo nunca lo perdió; contra un bloque de prueba con BoxCollider2D, que no está en el juego, se detiene en su cara a 0.005 unidades sin atravesarlo, por los dos lados, y sin el bloque pasa de largo. Saltando sin soltar la tecla conserva los 4 u/s en el aire, sube 1.22 u y aterriza corriendo a 4.05 u del despegue; con el doble salto sube 2.44 u y la cámara sube con él y regresa, como en la 3.4.
+- La bolsa y la botella se lanzan corriendo: la bolsa sale de la mano, rebota dos veces en la banqueta y desaparece; la botella sale a 14 u/s y desaparece al salir de la vista de la cámara, que ahora se mueve con el recolector. Al lanzar, el recolector no pierde velocidad ni el suelo.
+
+![La bolsa lanzada sin dejar de correr: apunta con K, la bolsa en el aire, el primer rebote en la banqueta y el segundo, con el recolector a 3.92 u/s en los cuatro cuadros](docs/movimiento-bolsa.png)
 
 ## Arte
 
