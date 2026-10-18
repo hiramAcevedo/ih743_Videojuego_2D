@@ -177,3 +177,5 @@ MonoBehaviour:
   giro: 200
   margenVista: 0.05
   vidaEnReposo: 0.5
+  pedazo: {fileID: 21300000, guid: 15ee56ce335bf48b2bac0a0182a1d273, type: 3}
+  colorPedazos: {r: 0.23529412, g: 0.25882354, b: 0.28235295, a: 1}

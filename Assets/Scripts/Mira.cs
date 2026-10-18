@@ -4,6 +4,8 @@ using UnityEngine;
 // delante del recolector y oscila sola en un arco alrededor del punto de lanzamiento, subiendo y bajando
 // sin parar; al soltar, la bolsa sale hacia donde esté la mira en ese momento. Es hija del recolector, así
 // que cuando él se voltea con la escala en x la mira pasa al otro lado sola.
+// Desde la 3.6 la mira también puede ir a mano: al cargar la bolsa aparece en un ángulo inicial y se sube o baja con
+// las flechas (Ajustar), sin oscilar, porque la barra de fuerza ya pide su propio tiempo.
 [RequireComponent(typeof(SpriteRenderer))]
 public class Mira : MonoBehaviour
 {
@@ -22,6 +24,8 @@ public class Mira : MonoBehaviour
     float tiempo;
 
     public bool Visible => dibujo != null && dibujo.enabled;
+    // A mano: no oscila; el ángulo cambia sólo con Ajustar.
+    public bool Manual { get; private set; }
     // Ángulo actual, en grados, en el espacio del recolector (0 es hacia donde mira).
     public float Angulo { get; private set; }
     public float AnguloMinimo => anguloMinimo;
@@ -39,9 +43,24 @@ public class Mira : MonoBehaviour
 
     public void Mostrar()
     {
+        Manual = false;
         tiempo = 0f;
         Colocar(anguloMinimo);
         dibujo.enabled = true;
+    }
+
+    // A mano, empezando en angulo (grados sobre la horizontal, dentro del arco).
+    public void MostrarManual(float angulo)
+    {
+        Manual = true;
+        Colocar(Mathf.Clamp(angulo, anguloMinimo, anguloMaximo));
+        dibujo.enabled = true;
+    }
+
+    // Sube (positivo) o baja (negativo) la mira, sin salir del arco.
+    public void Ajustar(float grados)
+    {
+        Colocar(Mathf.Clamp(Angulo + grados, anguloMinimo, anguloMaximo));
     }
 
     public void Ocultar()
@@ -51,7 +70,7 @@ public class Mira : MonoBehaviour
 
     void Update()
     {
-        if (!Visible)
+        if (!Visible || Manual)
         {
             return;
         }

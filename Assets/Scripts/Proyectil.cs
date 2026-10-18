@@ -8,6 +8,8 @@ using UnityEngine;
 // Quien lanza fija la dirección con Lanzar; la física 2D hace el resto. El proyectil desaparece al salir
 // del encuadre de la cámara, al cumplir su vida, al pasarse de rebotes (un prefab con cero rebotes desaparece
 // al tocar algo) o si, ya sin rebotes por dar, se queda quieto en el suelo.
+// Desde la 3.6 el lanzamiento trae un multiplicador de rapidez (la fuerza de la carga o del swing) y puede ser
+// perfecto, con una estela dorada. Si se resbala, el objeto cae a los pies y al primer contacto se rompe en pedazos.
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class Proyectil : MonoBehaviour
 {
@@ -25,6 +27,10 @@ public class Proyectil : MonoBehaviour
     [SerializeField] float margenVista = 0.05f;
     [Tooltip("Segundos quieto en el suelo, ya sin rebotes por dar, antes de desaparecer.")]
     [SerializeField] float vidaEnReposo = 0.5f;
+    [Tooltip("Sprite de un píxel para los pedazos cuando se rompe.")]
+    [SerializeField] Sprite pedazo;
+    [Tooltip("Color de los pedazos.")]
+    [SerializeField] Color colorPedazos = new Color32(60, 66, 72, 255);
 
     Rigidbody2D cuerpo;
     float ultimoContacto = -1f, quietoDesde = -1f;
@@ -40,6 +46,11 @@ public class Proyectil : MonoBehaviour
     public float EscalaGravedad => escalaGravedad;
     public int RebotesMaximos => rebotesMaximos;
     public float Vida => vida;
+    // La fuerza con que salió (fracción de su rapidez), si fue un tiro perfecto y si se le resbaló al recolector.
+    public float Multiplicador { get; private set; } = 1f;
+    public bool Perfecto { get; private set; }
+    public bool Resbalo { get; private set; }
+    public Sprite PedazoSprite => pedazo;
 
     void Awake()
     {
@@ -54,12 +65,63 @@ public class Proyectil : MonoBehaviour
     }
 
     // Dirección de salida (se normaliza) y sentido del giro (1 derecha, -1 izquierda).
-    public void Lanzar(Vector2 direccion, int sentido)
+    public void Lanzar(Vector2 direccion, int sentido) => Lanzar(direccion, sentido, 1f, false);
+
+    // Con la fuerza de la carga o del swing: la rapidez se multiplica por multiplicador; un tiro perfecto deja estela.
+    public void Lanzar(Vector2 direccion, int sentido, float multiplicador, bool perfecto)
     {
         Sentido = sentido;
-        VelocidadInicial = direccion.normalized * rapidez;
+        Multiplicador = multiplicador;
+        Perfecto = perfecto;
+        VelocidadInicial = direccion.normalized * rapidez * multiplicador;
         cuerpo.linearVelocity = VelocidadInicial;
-        cuerpo.angularVelocity = -sentido * giro;
+        cuerpo.angularVelocity = -sentido * giro * Mathf.Max(0.5f, multiplicador);
+        if (perfecto)
+        {
+            Estela();
+        }
+    }
+
+    // Se le resbaló: cae casi a plomo, un poco hacia adelante, y se rompe al primer contacto.
+    public void Resbalar(int sentido)
+    {
+        Sentido = sentido;
+        Resbalo = true;
+        Multiplicador = 0f;
+        rebotesMaximos = 0;
+        cuerpo.gravityScale = 1f;
+        VelocidadInicial = new Vector2(sentido * 0.8f, 0.6f);
+        cuerpo.linearVelocity = VelocidadInicial;
+        cuerpo.angularVelocity = -sentido * 120f;
+    }
+
+    // Se rompe donde está: pedazos en abanico y desaparece.
+    public void Romper()
+    {
+        var r = GetComponent<SpriteRenderer>();
+        Pedazo.Soltar(pedazo, transform.position, colorPedazos, 7, 3.2f, Sentido, r != null ? r.sortingOrder + 1 : 10);
+        Destroy(gameObject);
+    }
+
+    void Estela()
+    {
+        var estela = gameObject.AddComponent<TrailRenderer>();
+        estela.time = 0.25f;
+        estela.startWidth = 0.16f;
+        estela.endWidth = 0f;
+        estela.minVertexDistance = 0.05f;
+        var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") ?? Shader.Find("Sprites/Default");
+        estela.material = new Material(shader);
+        var dibujo = GetComponent<SpriteRenderer>();
+        if (dibujo != null)
+        {
+            estela.sortingOrder = dibujo.sortingOrder - 1;
+        }
+        var degradado = new Gradient();
+        degradado.SetKeys(
+            new[] { new GradientColorKey(new Color32(255, 214, 92, 255), 0f), new GradientColorKey(new Color32(255, 150, 40, 255), 1f) },
+            new[] { new GradientAlphaKey(0.9f, 0f), new GradientAlphaKey(0f, 1f) });
+        estela.colorGradient = degradado;
     }
 
     void Update()
@@ -96,7 +158,11 @@ public class Proyectil : MonoBehaviour
         }
         ultimoContacto = Time.time;
         Rebotes++;
-        if (Rebotes > rebotesMaximos)
+        if (Resbalo)
+        {
+            Romper();
+        }
+        else if (Rebotes > rebotesMaximos)
         {
             Destroy(gameObject);
         }
