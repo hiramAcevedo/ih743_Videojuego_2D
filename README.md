@@ -23,8 +23,7 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 | Barra espaciadora, W o flecha arriba | Salta con los pies en el suelo y, en el aire, una vez más: el doble salto (un salto por pulsación; la barra espaciadora, desde la entrega 3.6; con V sostenida, sólo la barra) |
 | V (sostenida) | Carga la bolsa sin dejar de correr: aparece la mira y se llena la barra de fuerza; las flechas arriba y abajo, o W y S, suben y bajan la mira (desde la entrega 3.6) |
 | V (al soltar) | Lanza la bolsa hacia la mira con la fuerza de la barra: en la franja verde, tiro perfecto; en el tramo rojo se rompe en la mano, y si se queda en rojo revienta y quita un corazón |
-| F | Arranca el swing de la botella: una aguja recorre la barra (desde la entrega 3.6) |
-| F otra vez | Lanza la botella, recta hacia donde mira: con la aguja en verde, tiro perfecto; en amarillo, normal; en rojo se le resbala y se rompe a sus pies |
+| F (sostenida) | Ráfaga de botellas sin dejar de correr ni de saltar: una cada 0.25 segundos, rectas hacia donde mira, que se rompen en vidrios a 7.5 unidades o al chocar (desde la entrega 3.7; en la 3.6, F era el swing) |
 
 ## La escena y el personaje (entrega 3.1)
 
@@ -53,11 +52,11 @@ Las dos imágenes juntan varios cuadros del mismo lanzamiento: el arco de la bol
 
 - `Assets/Scripts/Proyectil.cs`: la base común. Cada prefab trae su configuración (rapidez, escala de gravedad, vida, giro y cuántos contactos aguanta); `Lanzar(direccion, sentido)` fija la velocidad inicial y la velocidad angular del Rigidbody2D, y la física 2D hace el resto. El proyectil desaparece al salir del encuadre de la cámara o al cumplir su vida. Otro objeto que vuele es un prefab nuevo con otros números.
 - `Assets/Prefabs/Bolsa.prefab`: sprite `bolsa.png` (24x24), Rigidbody2D con gravedad, CircleCollider2D (radio 0.19) con el material `Assets/Fisica/Bolsa.physicsMaterial2D` (restitución 0.5, fricción 0.4) y `Proyectil` a 7 unidades por segundo con giro de 200 grados por segundo. Se lanza como en Yoshi's Island: al sostener K aparece la mira (`Mira.cs`, hija del recolector), que oscila sola entre -10 y 70 grados delante de él, a 2.5 unidades de la mano, en ciclos de 1.2 segundos; al soltar K la bolsa sale hacia la mira y la gravedad la curva (desde la 3.6 se carga con V y la mira se mueve a mano). Con la mira alta sube por encima de la cabeza y cae unas cuatro unidades adelante; con la mira baja es un tiro corto y tendido. En la 3.2 el suelo todavía no tenía collider, así que la bolsa atravesaba la banqueta, seguía cayendo y desaparecía al salir de la vista; conservó su collider, su material y dos rebotes configurados, y desde la 3.3 rebota en el suelo.
-- `Assets/Prefabs/Botella.prefab`: sprite `botella.png` (12x24), Rigidbody2D sin gravedad (escala 0), CapsuleCollider2D y `Proyectil` a 14 unidades por segundo girando a 540 grados por segundo. Sale con la barra espaciadora (desde la 3.6, con el swing de F), recta y horizontal hacia donde mira el recolector, y desaparece al salir de la vista o a los 3 segundos. Es la plantilla de cualquier otro proyectil rápido.
+- `Assets/Prefabs/Botella.prefab`: sprite `botella.png` (12x24), Rigidbody2D sin gravedad (escala 0), CapsuleCollider2D y `Proyectil` a 14 unidades por segundo girando a 540 grados por segundo. Sale con la barra espaciadora (en la 3.6, con el swing de F; desde la 3.7, en ráfaga con F sostenida), recta y horizontal hacia donde mira el recolector, y desaparece al salir de la vista o a los 3 segundos (desde la 3.7 se rompe a 7.5 unidades). Es la plantilla de cualquier otro proyectil rápido.
 - `PuntoDisparo`: un objeto vacío, hijo del `Recolector`, a la altura de la mano (0.75 unidades por delante del centro y 0.9 sobre los pies; desde la 3.6, en la mano abierta del cuadro de soltar, a 0.51 y 1.34); los dos proyectiles nacen ahí. Como es hijo, cuando el personaje se voltea con la escala en x el punto y la mira pasan al otro lado.
 - `RecolectorControl.cs`: lee las dos teclas con el Input System (`wasPressedThisFrame` y `wasReleasedThisFrame`: un proyectil por pulsación), instancia el prefab en `PuntoDisparo` y le pasa la dirección: la de la mira para la bolsa, la horizontal hacia donde mira para la botella. Los proyectiles no chocan con el recolector ni entre sí (`Physics2D.IgnoreCollision`).
 
-La animación de lanzar llegó en la 3.6; la cadencia del lanzamiento y los efectos de acción llegan en la 3.7. El collider del suelo y la física del recolector (gravedad, salto, colisiones) llegaron en la 3.3.
+La animación de lanzar llegó en la 3.6; la cadencia del lanzamiento y los efectos de acción, en la 3.7. El collider del suelo y la física del recolector (gravedad, salto, colisiones) llegaron en la 3.3.
 
 ## Mecánicas y físicas (entrega 3.3)
 
@@ -128,7 +127,7 @@ Para correr y lanzar a la vez, el recolector va en dos partes, como los personaj
 
 La bolsa se lanza con fuerza. Con V sostenida, sin frenar, aparece la mira a 35 grados (las flechas arriba y abajo, o W y S, la suben o la bajan entre -10 y 70; mientras tanto sólo la barra espaciadora salta) y sobre la cabeza se llena una barra en 1.1 segundos. Al soltar V la bolsa sale con la fuerza de la barra: un toque la deja a 2.1 unidades, y la franja verde, del 80 al 95 %, es un tiro perfecto con 25 % más de fuerza y estela dorada que cae a 9.7 unidades. El tramo rojo es el riesgo: soltar ahí rompe la bolsa en la mano, y quedarse 0.45 segundos en rojo la revienta: pedazos, un corazón menos, un empujón hacia atrás y 0.4 segundos aturdido, parpadeando en rojo. Sin corazones se desmaya un segundo y se levanta con los tres.
 
-La botella se lanza con ritmo. F arranca el swing: una aguja cruza la barra en 0.7 segundos y regresa. F otra vez la lanza según dónde esté la aguja: en el centro verde, tiro perfecto a 18.9 u/s (14 por 1.35) con estela; en amarillo, normal a 14 u/s; en rojo se le resbala y se rompe a sus pies, y si la aguja va y vuelve sin el segundo toque, también.
+La botella se lanza con ritmo (en la 3.7 el swing se quitó y F sostenida es una ráfaga). F arranca el swing: una aguja cruza la barra en 0.7 segundos y regresa. F otra vez la lanza según dónde esté la aguja: en el centro verde, tiro perfecto a 18.9 u/s (14 por 1.35) con estela; en amarillo, normal a 14 u/s; en rojo se le resbala y se rompe a sus pies, y si la aguja va y vuelve sin el segundo toque, también.
 
 La animación de lanzar son ocho cuadros del torso, de 128x128, con el arco de un lanzamiento por encima del hombro: listo, anticipación y armado forman Cargar, que se queda en el armado (el codo a la altura del hombro y la mano detrás de la cabeza) mientras dura la carga o el swing; impulso, suelta, seguimiento, recuperación y regreso forman Lanzar, de 0.35 segundos, con el tronco inclinado y el otro brazo en contrapeso. La bolsa o la botella en la mano sigue al guante cuadro a cuadro, y el proyectil nace en la mano abierta del cuadro de suelta en el mismo cuadro en que se suelta la tecla.
 
@@ -139,7 +138,7 @@ La animación de lanzar son ocho cuadros del torso, de 128x128, con el arco de u
 ![Reposo, Correr, Correr con Cargar y Correr con Lanzar hacia la derecha y hacia la izquierda: el recolector se voltea con la escala en x y la bolsa y la botella salen del lado al que mira](docs/bala-dos-lados.png)
 
 - `Assets/Scripts/RecolectorControl.cs`: el salto con la barra espaciadora; V y F; los parámetros `cargando` (`SetBool`) y `lanzar` (`SetTrigger`), puestos en el mismo cuadro de la tecla, y el peso de la capa Brazos (1 mientras carga o lanza, 0 el resto, para que el torso vuelva al de la capa base). `LateUpdate` monta el torso de lanzar en la cadera de las piernas que se ven (`cuadrosPiernas` y `caderas`) y lleva el objeto en la mano al guante del cuadro (`cuadrosMano` y `anclasMano`); `Lanzar` instancia el prefab en `PuntoDisparo`, la mano abierta del cuadro de suelta (0.57 unidades por delante y 1.80 sobre los pies), movido con el torso.
-- `Assets/Scripts/MedidorCarga.cs` y `Assets/Scripts/MedidorSwing.cs` (nuevos): la barra de la bolsa y la aguja de la botella, hijos del recolector y dibujados con un sprite de un píxel escalado; deciden el resultado (normal, perfecto, inútil o resbalón) y la fuerza.
+- `Assets/Scripts/MedidorCarga.cs` y `Assets/Scripts/MedidorSwing.cs` (nuevos; el segundo se quitó en la 3.7): la barra de la bolsa y la aguja de la botella, hijos del recolector y dibujados con un sprite de un píxel escalado; deciden el resultado (normal, perfecto, inútil o resbalón) y la fuerza.
 - `Assets/Scripts/Salud.cs` (nuevo): tres corazones en la esquina de la vista, el golpe con empujón y aturdimiento, el parpadeo de las dos partes mientras es invulnerable y el desmayo. `Assets/Scripts/Pedazo.cs` (nuevo): los pedazos de una bolsa o una botella rota, que caen con gravedad y desaparecen.
 - `Assets/Scripts/Proyectil.cs`: la fuerza multiplica la rapidez, el tiro perfecto agrega una estela (TrailRenderer), y `Resbalar` y `Romper` resuelven los lanzamientos fallidos. `Assets/Scripts/Mira.cs`: la mira se mueve a mano mientras se carga, en lugar de oscilar sola.
 - `Assets/Animaciones/`: `Recolector_Reposo` y `Recolector_Correr` animan piernas y torso con los tiempos de siempre; `Recolector_Cargar` y `Recolector_Lanzar`, sólo el torso; `Recolector.controller` suma la capa Brazos (Libre, Cargar y Lanzar), con transiciones desde cualquier estado, sin tiempo de salida ni fundido.
@@ -153,9 +152,48 @@ Medido con el juego en marcha y un teclado virtual, en 18 revisiones sin una fal
 
 ![Quedarse en rojo: la barra parpadea, la bolsa revienta en la mano y el recolector pierde un corazón](docs/bala-bolsa-revienta.png)
 
+## Efectos de acción (entrega 3.7)
+
+Con F sostenida, el recolector lanza una ráfaga de botellas, como el disparo del tutorial (25:22 a 34:07): una cada 0.25 segundos, rectas, horizontales y sin gravedad. Cada botella sale con un destello en la mano, deja una estela y se rompe en vidrios al llegar a 7.5 unidades de la mano o al chocar con algo. El swing de la 3.6 se quitó: con la tecla sostenida, un segundo toque para medir el tiro no tenía sentido. La bolsa sigue igual, con V.
+
+![El recolector lanza la ráfaga quieto, corriendo, saltando y hacia la izquierda: las botellas salen parejas, dejan estela y se rompen en vidrios](docs/rafaga.gif)
+
+- **Sin gravedad.** El Rigidbody2D de la botella tiene escala de gravedad 0, como la bala del tutorial (27:06), sin amortiguación, y como en el tutorial (27:22) su velocidad se vuelve a poner en cada paso de la física: nada la frena ni la desvía. Saltando con F sostenida, cada botella sigue a la altura de la mano de la que salió aunque el recolector suba y baje.
+- **Trayectoria lineal y constante.** Sale a 14 unidades por segundo hacia donde mira y en cada cuadro está en su recta, a 14 por el tiempo que lleva desde la mano. El Rigidbody2D va interpolado: la física da 50 pasos por segundo y el juego dibuja 60 cuadros, y sin interpolación la botella se quedaría quieta un cuadro de cada seis.
+- **Cantidad uniforme y fluida, sin encimarse.** El tutorial (31:33) guarda `Time.time` del cuadro en que salió el disparo y compara con esa hora más 0.25: el retraso de ese cuadro se suma al intervalo siguiente. Aquí la cita de cada botella es la de la anterior más 0.25 exactos, así que sale una cada 15 cuadros a 60 por segundo, y si un cuadro llega un poco tarde la botella nace adelantada lo que ya habría recorrido. Quedan a la misma distancia una de otra: 3.5 unidades quieto y 2.5 corriendo, porque la mano avanza con él. Tocar F más rápido no adelanta ninguna.
+- **Efectos.** El destello de la mano dura tres cuadros. La estela son copias del sprite de la botella cada 0.35 unidades, quietas donde pasó y cada vez más tenues (0.1 segundos). Al romperse, otro destello más grande y 15 pedazos de vidrio y brillo que caen; si se rompe en el aire, siguen un poco hacia donde iba. El tutorial termina la bala con un evento al final de su animación (32:17); la botella termina rompiéndose a su alcance.
+- **Animación.** Rafaga es un lanzamiento corto del torso para cada botella, en 0.25 segundos: suelta, seguimiento, armado e impulso, con la botella siguiente en la mano en el armado y el impulso. Al soltar F, RafagaFin baja el brazo y el torso vuelve al de la capa base. Las piernas siguen en Reposo o en Correr.
+
+![Un ciclo de la ráfaga cuadro a cuadro: la botella sale con destello, el brazo sigue, se arma con la siguiente y la lleva hacia adelante; a los 15 cuadros sale la siguiente](docs/rafaga-ciclo.png)
+
+![Una botella cada 0.05 segundos desde que sale: avanza 0.7 unidades cada vez, en línea recta, con su estela](docs/rafaga-trayectoria.png)
+
+![La ráfaga quieto, 0.25 segundos después, corriendo y hacia la izquierda: botellas a la misma distancia, ninguna encima de otra](docs/rafaga-separacion.png)
+
+![La botella llega a 7.5 unidades de la mano y se rompe: destello, vidrios y brillos que siguen hacia adelante y caen](docs/rafaga-rotura.png)
+
+![Saltando con F sostenida: cada botella sigue a la altura en que salió mientras el recolector sube y baja](docs/rafaga-salto.png)
+
+- `Assets/Scripts/RecolectorControl.cs`: F sostenida en lugar del swing. La cita de la siguiente botella avanza 0.25 exactos; en el cuadro de cada una, `Animator.Play` reinicia Rafaga en la capa Brazos, la botella nace en la mano abierta y aparece el destello. Al soltar F, RafagaFin. Un golpe corta la ráfaga y, para seguir, hay que volver a tocar F. Mientras se carga la bolsa, F no lanza, y en la ráfaga V no carga.
+- `Assets/Scripts/Proyectil.cs`: `Disparar`, para la botella de la ráfaga, con su cita; el alcance, la rotura al chocar, la velocidad puesta en cada paso de la física, la estela de copias y la rotura con brillos y destello. Lo de la bolsa no cambia.
+- `Assets/Scripts/Desvanecer.cs` (nuevo): un sprite que se desvanece; son las copias de la estela y los destellos. `Assets/Scripts/Pedazo.cs`: el tamaño de los pedazos y el empuje con que salen.
+- `Assets/Scripts/MedidorSwing.cs`: se quitó, y con él el hijo `MedidorSwing` del recolector.
+- `Assets/Animaciones/`: `Recolector_Rafaga` y `Recolector_RafagaFin` (nuevos), con los cuadros del torso de lanzar de la 3.6; `Recolector.controller` suma Rafaga y RafagaFin a la capa Brazos, sin escribir valores por omisión, y RafagaFin vuelve a Libre al terminar.
+- `Assets/Prefabs/Botella.prefab`: alcance 7.5, se rompe al chocar, velocidad constante, estela cada 0.35 unidades, 10 pedazos de vidrio de 3 y 4 píxeles y 5 brillos, destello al doble y Rigidbody2D interpolado. `Assets/Arte/Props/destello.png` (nuevo).
+
+Medido con el juego en marcha y un teclado virtual, en 27 revisiones sin una falla y sin errores ni avisos en la consola:
+
+- Con F sostenida 2 segundos salen 8 botellas, la primera en el cuadro de la tecla y las demás cada 15 cuadros, con citas cada 0.25 segundos exactos. A 30, 50 y 144 cuadros por segundo también salen 8 en 2 segundos (cada 7 u 8, 12 o 13 y 36 cuadros) y quedan a la misma distancia.
+- Escala de gravedad 0 en las 264 muestras de vuelo (botella por cuadro), sin cambio de altura ni velocidad vertical. Saltando, cinco botellas a cinco alturas, cada una en la suya.
+- En cada cuadro de vuelo, velocidad (14, 0) y la posición en su recta, x = mano + 14(t - cita), sin desvío medible. A 60 cuadros por segundo, en el cuadro en que nace la botella está a lo más 0.28 unidades delante de la mano abierta: lo que avanza en un paso de la física.
+- Entre botellas seguidas, de 3.479 a 3.521 unidades quieto y de 2.478 a 2.561 corriendo: la mano sube y baja con la cadera del cuadro de piernas (un píxel al respirar en Reposo, hasta dos en Correr). Ninguna caja de botella se tocó con otra (hueco mínimo 2.84 unidades) ni una estela con otra botella (0.66 corriendo).
+- Las 8 se rompieron a 7.5 unidades de la mano, en su recta, a 1.93 unidades o más del borde de la vista, cada una con 15 pedazos y su destello. Contra un bloque de prueba con BoxCollider2D, que no está en el juego, se rompen en su cara y ninguna lo atraviesa.
+- Con 30 toques de F en 2 segundos salen 8, cada 16 cuadros: nunca antes de los 15 de la cadencia.
+- Al soltar F, RafagaFin en ese cuadro y Libre al terminar; no sale ninguna botella más. Un golpe corta la ráfaga en el cuadro siguiente y, aturdido o con F todavía sostenida, no sale ninguna. Con V cargando, F no lanza; la bolsa sale con su arco.
+
 ## Arte
 
-Todo el arte es original y está hecho para este proyecto. El recolector es pixel art de 128x128 por cuadro, editado en Aseprite: 8 cuadros de reposo y 12 de carrera, con los pies en la misma línea en todos los cuadros (desde la 3.6, partidos en piernas y torso), y 8 cuadros del torso para lanzar, hechos píxel por píxel sobre el mismo personaje y con la misma paleta, con lanzamientos de Metal Slug y una secuencia de pitcheo como referencia de las poses; se importa a 48 píxeles por unidad para quedar en proporción con las fachadas. La bolsa (24x24), la botella (12x24), la mira (15x15) y los corazones (9x8) son sprites hechos pixel por pixel con colores de la paleta del recolector. Las fachadas, el suelo, el cielo, el camión, el perro y la moneda de peso son pixel art hecho con código, sin recursos descargados.
+Todo el arte es original y está hecho para este proyecto. El recolector es pixel art de 128x128 por cuadro, editado en Aseprite: 8 cuadros de reposo y 12 de carrera, con los pies en la misma línea en todos los cuadros (desde la 3.6, partidos en piernas y torso), y 8 cuadros del torso para lanzar, hechos píxel por píxel sobre el mismo personaje y con la misma paleta, con lanzamientos de Metal Slug y una secuencia de pitcheo como referencia de las poses; se importa a 48 píxeles por unidad para quedar en proporción con las fachadas. La bolsa (24x24), la botella (12x24), la mira (15x15), los corazones (9x8) y el destello (11x11, desde la 3.7) son sprites hechos pixel por pixel con colores de la paleta del recolector. Las fachadas, el suelo, el cielo, el camión, el perro y la moneda de peso son pixel art hecho con código, sin recursos descargados.
 
 ## Qué se versiona
 

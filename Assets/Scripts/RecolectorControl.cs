@@ -11,13 +11,15 @@ using UnityEngine.InputSystem;
 // mientras tanto no saltan; la barra espaciadora sí) y la barra de fuerza se llena (MedidorCarga). Al soltar V la bolsa sale
 // hacia la mira con esa fuerza: en la franja verde es un tiro perfecto; en el tramo rojo la bolsa se rompe en la mano y
 // cae; quedarse en rojo la revienta y quita un corazón.
-// F: arranca el swing de la botella (MedidorSwing); F otra vez la lanza, recta y horizontal, según dónde esté la aguja:
-// verde perfecto, amarillo normal, rojo se le resbala y se rompe a sus pies. Si no se vuelve a tocar F, también se resbala.
+// F sostenida: ráfaga de botellas, como el disparo del tutorial (de 25:22 a 32:00): una cada cadencia segundos (0.25), rectas,
+// horizontales, sin gravedad y a la misma rapidez, así que salen parejas y no se enciman. Cada una deja estela y se rompe en
+// vidrios al chocar o al llegar a su alcance (Proyectil). La primera sale en el cuadro de la tecla.
 // El cuerpo va en dos capas del Animator, como en Metal Slug: las piernas (el SpriteRenderer del recolector) con Reposo y
-// Correr, y encima el torso (un hijo) con lo mismo o, al lanzar, con Cargar (mientras carga la bolsa o corre el swing) y
-// Lanzar (al soltar). Así corre y lanza a la vez. Todo cambia en el cuadro de la tecla, sin tiempo de salida. El torso de
-// lanzar se monta en la cadera de las piernas que se ven, la bolsa o la botella en la mano sigue al guante cuadro a cuadro,
-// y el proyectil nace en la mano abierta del cuadro en que suelta.
+// Correr, y encima el torso (un hijo) con lo mismo o, al lanzar, con Cargar (mientras carga la bolsa), Lanzar (al soltarla),
+// Rafaga (un lanzamiento corto por botella) y RafagaFin (el brazo que baja al soltar F). Así corre y lanza a la vez. Todo
+// cambia en el cuadro de la tecla, sin tiempo de salida. El torso de lanzar se monta en la cadera de las piernas que se ven,
+// la bolsa en la mano sigue al guante cuadro a cuadro (en la ráfaga, la botella siguiente aparece en el armado y el impulso), y el
+// proyectil nace en la mano abierta del cuadro en que suelta.
 // La física es la de Unity 2D: un Rigidbody2D dinámico con gravedad y la rotación congelada, y una
 // CapsuleCollider2D del tamaño del cuerpo con la base en los pies, que se apoya en el collider del suelo.
 // El desplazamiento es el del tutorial (de 11:53 a 15:23): en cada paso de la física la velocidad en x del
@@ -29,8 +31,13 @@ public class RecolectorControl : MonoBehaviour
     static readonly int Corriendo = Animator.StringToHash("corriendo");
     static readonly int Cargando = Animator.StringToHash("cargando");
     static readonly int LanzarDisparo = Animator.StringToHash("lanzar");
+    static readonly int EstadoRafaga = Animator.StringToHash("Rafaga");
+    static readonly int EstadoRafagaFin = Animator.StringToHash("RafagaFin");
+    static readonly int EstadoLibre = Animator.StringToHash("Libre");
     // Más rápido que esto hacia arriba ya va despegando, aunque el rayo todavía alcance el suelo.
     const float VelocidadDespegue = 0.5f;
+    // Hasta cuánto puede llegar tarde el cuadro a la cita de una botella y seguir contando desde la cita, en segundos.
+    const double ToleranciaCita = 0.05;
 
     [Header("Movimiento")]
     [Tooltip("Rapidez al desplazarse a los lados, en unidades por segundo. La velocidad en x es el eje horizontal por este número.")]
@@ -57,8 +64,12 @@ public class RecolectorControl : MonoBehaviour
     [SerializeField] Mira mira;
     [Tooltip("La barra de fuerza de la bolsa (V), hija del recolector.")]
     [SerializeField] MedidorCarga medidorCarga;
-    [Tooltip("El swing de la botella (F), hijo del recolector.")]
-    [SerializeField] MedidorSwing medidorSwing;
+    [Tooltip("Segundos entre una botella y la siguiente con F sostenida. El tutorial dispara cada 0.25 s.")]
+    [SerializeField] float cadencia = 0.25f;
+    [Tooltip("Destello que se ve un instante en la mano al soltar cada botella.")]
+    [SerializeField] Sprite destello;
+    [Tooltip("Segundos que dura el destello de la mano.")]
+    [SerializeField] float vidaDestello = 0.05f;
     [Tooltip("Ángulo con que aparece la mira al empezar a cargar, en grados.")]
     [SerializeField] float anguloInicial = 35f;
     [Tooltip("Grados por segundo que sube o baja la mira con las flechas mientras carga.")]
@@ -90,6 +101,10 @@ public class RecolectorControl : MonoBehaviour
     // La capa Brazos del Animator: pesa 1 mientras carga o lanza y 0 el resto del tiempo, para que el torso sea el de la
     // capa base. En su estado Libre la capa no anima nada, pero con peso 1 dejaría el torso en el último cuadro de lanzar.
     int capaBrazos = -1;
+    // La ráfaga: si está en marcha (F sostenida), si todavía no sale su primera botella y la cita de la siguiente, en
+    // segundos del reloj del juego.
+    bool enRafaga, primeraDeRafaga;
+    double proximoTiro = double.NegativeInfinity;
 
     // -1 izquierda, 0 sin dirección, 1 derecha; como Input.GetAxisRaw("Horizontal").
     public float Horizontal { get; private set; }
@@ -101,8 +116,13 @@ public class RecolectorControl : MonoBehaviour
     public int Saltos { get; private set; }
     // Con la bolsa cargando: W y la flecha arriba apuntan la mira en lugar de saltar.
     public bool Apuntando => medidorCarga != null && medidorCarga.Activo;
-    // Con la bolsa cargando o el swing de la botella en marcha.
-    public bool Preparando => Apuntando || (medidorSwing != null && medidorSwing.Activo);
+    // Con la bolsa cargando o la ráfaga de botellas en marcha.
+    public bool Preparando => Apuntando || enRafaga;
+    public bool EnRafaga => enRafaga;
+    public float Cadencia => cadencia;
+    // Botellas lanzadas desde que empezó la escena, y la cita (segundos del reloj) de la última.
+    public int BotellasLanzadas { get; private set; }
+    public double UltimaCita { get; private set; }
     // Cuánto se movió el torso para quedar sobre la cadera de las piernas que se ven, en unidades (cero sin lanzar).
     public Vector2 DesfaseTorso { get; private set; }
     // Lo que pasó en el último lanzamiento, para quien quiera leerlo (la prueba, por ejemplo).
@@ -204,6 +224,12 @@ public class RecolectorControl : MonoBehaviour
             DesfaseTorso = EsTorsoDeLanzar(torso.sprite) ? CaderaDe(dibujo.sprite) : Vector2.zero;
             torso.transform.localPosition = DesfaseTorso;
         }
+        // En la ráfaga, la botella siguiente se ve en la mano en los cuadros que tienen guante (el armado y el impulso);
+        // en el de suelta ya va volando y en el seguimiento la mano está vacía.
+        if (enRafaga && objetoEnMano != null)
+        {
+            objetoEnMano.enabled = torso != null && TieneAncla(torso.sprite);
+        }
         if (objetoEnMano != null && objetoEnMano.enabled)
         {
             objetoEnMano.transform.localPosition = AnclaDe(torso != null ? torso.sprite : dibujo.sprite);
@@ -240,6 +266,21 @@ public class RecolectorControl : MonoBehaviour
         return Vector2.zero;
     }
 
+    bool TieneAncla(Sprite cuadro)
+    {
+        if (cuadrosMano != null && anclasMano != null)
+        {
+            for (int i = 0; i < cuadrosMano.Length && i < anclasMano.Length; i++)
+            {
+                if (cuadrosMano[i] == cuadro)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     Vector2 AnclaDe(Sprite cuadro)
     {
         if (cuadrosMano != null && anclasMano != null)
@@ -258,7 +299,7 @@ public class RecolectorControl : MonoBehaviour
     // V: cargar mientras se sostiene, apuntar con las flechas, lanzar al soltar.
     void LeerBolsa(Keyboard teclado)
     {
-        if (medidorCarga == null || mira == null || (medidorSwing != null && medidorSwing.Activo))
+        if (medidorCarga == null || mira == null || enRafaga)
         {
             return;
         }
@@ -319,50 +360,104 @@ public class RecolectorControl : MonoBehaviour
         }
     }
 
-    // F: el primer toque arranca el swing, el segundo lanza; si la aguja termina sin el segundo toque, se resbala.
+    // F sostenida: la ráfaga. Como en el tutorial (31:33), sale una botella cada cadencia segundos mientras se sostiene la
+    // tecla, pero la cita de la siguiente es la de la anterior más la cadencia, no el cuadro en que salió: el tutorial
+    // guarda Time.time y el retraso de cada cuadro se suma al intervalo, que así va y viene. Aquí sale una cada 15 cuadros
+    // a 60 por segundo, sin atrasarse ni adelantarse, y tocar F más rápido no adelanta la siguiente. La primera sale en el
+    // cuadro de la tecla, si ya pasó la cadencia desde la última. Al soltar F, el brazo baja (RafagaFin).
     void LeerBotella(Keyboard teclado)
     {
-        if (medidorSwing == null || (medidorCarga != null && medidorCarga.Activo))
+        if (botellaPrefab == null || Apuntando)
         {
             return;
         }
 
-        if (!medidorSwing.Activo)
+        if (!enRafaga)
         {
-            if (teclado.fKey.wasPressedThisFrame)
+            if (!teclado.fKey.wasPressedThisFrame)
             {
-                medidorSwing.Empezar();
-                EmpezarCarga(botellaPrefab);
+                return;
             }
+            enRafaga = true;
+            primeraDeRafaga = true;
+            if (objetoEnMano != null)
+            {
+                var dibujoPrefab = botellaPrefab.GetComponent<SpriteRenderer>();
+                objetoEnMano.sprite = dibujoPrefab != null ? dibujoPrefab.sprite : null;
+                objetoEnMano.enabled = false;
+            }
+        }
+
+        if (!teclado.fKey.isPressed)
+        {
+            TerminarRafaga(true);
             return;
         }
 
-        bool agotado = false;
-        if (teclado.fKey.wasPressedThisFrame || (agotado = medidorSwing.Avanzar(Time.deltaTime)))
+        double ahora = Time.timeAsDouble;
+        if (ahora < proximoTiro - 1e-4)
         {
-            var resultado = agotado ? MedidorSwing.Resultado.Resbalon : medidorSwing.Resolver(out _);
-            float multiplicador = 0f;
-            if (!agotado)
-            {
-                multiplicador = resultado == MedidorSwing.Resultado.Perfecto ? medidorSwing.BonoPerfecto : resultado == MedidorSwing.Resultado.Normal ? 1f : 0f;
-            }
-            else
-            {
-                medidorSwing.Cancelar();
-            }
-            TerminarCarga(true);
-            UltimaFuerza = multiplicador;
-            if (resultado == MedidorSwing.Resultado.Resbalon)
-            {
-                UltimoResultado = agotado ? "botella_agotada" : "botella_resbalo";
-                UltimoProyectil = Lanzar(botellaPrefab, Vector2.zero, 0f, false, true);
-            }
-            else
-            {
-                bool perfecto = resultado == MedidorSwing.Resultado.Perfecto;
-                UltimoResultado = perfecto ? "botella_perfecta" : "botella_normal";
-                UltimoProyectil = Lanzar(botellaPrefab, new Vector2(Sentido(), 0f), multiplicador, perfecto, false);
-            }
+            return;
+        }
+        // La primera de la ráfaga sale ahora. Las demás salen con la hora de su cita, aunque el cuadro llegue un poco
+        // después; si llega muy tarde (un tirón del juego), la cuenta vuelve a empezar desde ahora.
+        double cita = !primeraDeRafaga && ahora - proximoTiro <= ToleranciaCita ? proximoTiro : ahora;
+        primeraDeRafaga = false;
+        proximoTiro = cita + cadencia;
+        Tirar(cita);
+    }
+
+    // Una botella de la ráfaga: el lanzamiento corto del torso desde el cuadro de suelta, la botella recta hacia donde mira
+    // y el destello en la mano.
+    void Tirar(double cita)
+    {
+        PesoBrazos(1f);
+        if (capaBrazos >= 0)
+        {
+            animator.Play(EstadoRafaga, capaBrazos, 0f);
+        }
+        if (objetoEnMano != null)
+        {
+            objetoEnMano.enabled = false;
+        }
+        UltimoResultado = "botella";
+        UltimaFuerza = 1f;
+        UltimaCita = cita;
+        UltimoProyectil = Lanzar(botellaPrefab, new Vector2(Sentido(), 0f), 1f, false, false, cita);
+        if (UltimoProyectil == null)
+        {
+            return;
+        }
+        BotellasLanzadas++;
+        if (destello != null)
+        {
+            var dibujoBotella = UltimoProyectil.GetComponent<SpriteRenderer>();
+            Desvanecer.Crear(destello, UltimoOrigen, Quaternion.identity, 1f, Color.white, vidaDestello, 0f,
+                dibujoBotella.sortingLayerID, dibujoBotella.sortingOrder + 1, transform, dibujoBotella.sharedMaterial);
+        }
+    }
+
+    // Termina la ráfaga: con el brazo que baja (al soltar F) o de golpe, de vuelta al torso de la capa base.
+    void TerminarRafaga(bool bajarBrazo)
+    {
+        enRafaga = false;
+        if (objetoEnMano != null)
+        {
+            objetoEnMano.enabled = false;
+        }
+        if (capaBrazos < 0)
+        {
+            return;
+        }
+        var estado = animator.GetCurrentAnimatorStateInfo(capaBrazos);
+        if (bajarBrazo && estado.shortNameHash == EstadoRafaga)
+        {
+            animator.Play(EstadoRafagaFin, capaBrazos, 0f);
+        }
+        else if (!bajarBrazo && (estado.shortNameHash == EstadoRafaga || estado.shortNameHash == EstadoRafagaFin))
+        {
+            animator.Play(EstadoLibre, capaBrazos, 0f);
+            PesoBrazos(0f);
         }
     }
 
@@ -406,16 +501,17 @@ public class RecolectorControl : MonoBehaviour
         }
     }
 
-    // Un golpe corta cualquier carga sin lanzar.
+    // Un golpe corta cualquier carga sin lanzar, y la ráfaga.
     void Cancelar()
     {
+        if (enRafaga)
+        {
+            TerminarRafaga(false);
+            return;
+        }
         if (medidorCarga != null && medidorCarga.Activo)
         {
             medidorCarga.Cancelar();
-        }
-        if (medidorSwing != null && medidorSwing.Activo)
-        {
-            medidorSwing.Cancelar();
         }
         if (mira != null)
         {
@@ -466,8 +562,8 @@ public class RecolectorControl : MonoBehaviour
 
     // Como en el tutorial, la dirección depende del signo de la escala en x y el proyectil nace en el
     // punto de lanzamiento, no en el centro del personaje. Cada prefab trae su propia física (Proyectil); la fuerza
-    // multiplica su rapidez. Si se resbala, nace en la mano y cae a los pies.
-    Proyectil Lanzar(GameObject prefab, Vector2 direccion, float fuerza, bool perfecto, bool resbala)
+    // multiplica su rapidez. Si se resbala, nace en la mano y cae a los pies. Una botella de la ráfaga trae su cita.
+    Proyectil Lanzar(GameObject prefab, Vector2 direccion, float fuerza, bool perfecto, bool resbala, double cita = double.NaN)
     {
         if (prefab == null || puntoDisparo == null)
         {
@@ -478,7 +574,13 @@ public class RecolectorControl : MonoBehaviour
         Vector3 origen = puntoDisparo.position + (torso != null ? torso.transform.position - transform.position : Vector3.zero);
         UltimoOrigen = origen;
         UltimoDesfase = DesfaseTorso;
-        GameObject copia = Instantiate(prefab, origen, Quaternion.identity);
+        Vector3 nacimiento = origen;
+        var modelo = prefab.GetComponent<Proyectil>();
+        if (!double.IsNaN(cita) && modelo != null)
+        {
+            nacimiento += (Vector3)(direccion.normalized * modelo.Rapidez * fuerza * (float)Proyectil.TiempoDeVuelo(cita));
+        }
+        GameObject copia = Instantiate(prefab, nacimiento, Quaternion.identity);
         var colliderCopia = copia.GetComponent<Collider2D>();
 
         // No choca con el recolector (su cápsula) ni con los otros proyectiles.
@@ -498,6 +600,10 @@ public class RecolectorControl : MonoBehaviour
         if (resbala)
         {
             proyectil.Resbalar(Sentido());
+        }
+        else if (!double.IsNaN(cita))
+        {
+            proyectil.Disparar(direccion, Sentido(), origen, cita);
         }
         else
         {

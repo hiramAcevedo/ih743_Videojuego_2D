@@ -184,59 +184,6 @@ Transform:
   - {fileID: 2006577532}
   m_Father: {fileID: 1090142515}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &132403653
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 132403655}
-  - component: {fileID: 132403654}
-  m_Layer: 0
-  m_Name: MedidorSwing
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &132403654
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 132403653}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5592ae913b755436bad4642ad89ed2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MedidorSwing
-  duracionIda: 0.7
-  medioVerde: 0.08
-  medioAmarillo: 0.28
-  bonoPerfecto: 1.35
-  pixel: {fileID: 21300000, guid: 15ee56ce335bf48b2bac0a0182a1d273, type: 3}
-  anchoPx: 40
-  altoPx: 4
-  altura: 2.45
-  ordenDibujo: 120
---- !u!4 &132403655
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 132403653}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1061774503}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &210528258
 GameObject:
   m_ObjectHideFlags: 0
@@ -1224,7 +1171,9 @@ MonoBehaviour:
   puntoDisparo: {fileID: 83227293}
   mira: {fileID: 815248926}
   medidorCarga: {fileID: 1158721396}
-  medidorSwing: {fileID: 132403654}
+  cadencia: 0.25
+  destello: {fileID: 21300000, guid: 4c0d1f32a1bc44f82bff505b414511f3, type: 3}
+  vidaDestello: 0.05
   anguloInicial: 35
   rapidezMira: 90
   anclaMano: {x: -0.5729167, y: 1.71875}
@@ -1232,10 +1181,12 @@ MonoBehaviour:
   - {fileID: -5126798357582118677, guid: 4035576dd05e34f339327a85ce387c23, type: 3}
   - {fileID: 4772970513568834503, guid: 4035576dd05e34f339327a85ce387c23, type: 3}
   - {fileID: 3597133430303480770, guid: 4035576dd05e34f339327a85ce387c23, type: 3}
+  - {fileID: -744221110822736113, guid: 4035576dd05e34f339327a85ce387c23, type: 3}
   anclasMano:
   - {x: -0.114583336, y: 0.8854167}
   - {x: -0.8020833, y: 0.9895833}
   - {x: -0.5729167, y: 1.71875}
+  - {x: -0.42708334, y: 1.7604166}
   torso: {fileID: 210528259}
   cuadrosPiernas:
   - {fileID: 6606774477258409810, guid: 46f94ee95a41747ceb7c09da8b993a15, type: 3}
@@ -1387,7 +1338,6 @@ Transform:
   - {fileID: 83227293}
   - {fileID: 815248928}
   - {fileID: 1158721397}
-  - {fileID: 132403655}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!70 &1061774504

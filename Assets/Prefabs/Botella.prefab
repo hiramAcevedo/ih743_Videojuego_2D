@@ -118,7 +118,7 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
@@ -180,3 +180,18 @@ MonoBehaviour:
   vidaEnReposo: 0.5
   pedazo: {fileID: 21300000, guid: 15ee56ce335bf48b2bac0a0182a1d273, type: 3}
   colorPedazos: {r: 0.5137255, g: 0.2901961, b: 0.16470589, a: 1}
+  alcance: 7.5
+  rompeAlChocar: 1
+  velocidadConstante: 1
+  pasoEstela: 0.35
+  vidaEstela: 0.1
+  colorEstela: {r: 1, g: 0.94, b: 0.82, a: 0.55}
+  cantidadPedazos: 10
+  rapidezPedazos: 3.6
+  tamanoPedazos: 3
+  arrastrePedazos: 0.3
+  brillos: 5
+  colorBrillo: {r: 0.90588236, g: 0.8980392, b: 0.8509804, a: 1}
+  destello: {fileID: 21300000, guid: 4c0d1f32a1bc44f82bff505b414511f3, type: 3}
+  escalaDestello: 2
+  vidaDestello: 0.1
