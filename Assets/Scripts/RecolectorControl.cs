@@ -108,6 +108,8 @@ public class RecolectorControl : MonoBehaviour
 
     // -1 izquierda, 0 sin dirección, 1 derecha; como Input.GetAxisRaw("Horizontal").
     public float Horizontal { get; private set; }
+    // Mientras se carga la partida o se pasa de un nivel a otro (GestorNiveles): no lee el teclado y se queda quieto.
+    public bool Bloqueado { get; set; }
     // Ángulo de la mira en el último lanzamiento de bolsa (grados sobre la horizontal, hacia donde mira).
     public float UltimoAngulo { get; private set; }
     // Si en este cuadro tiene los pies en el suelo: el rayo lo toca y no va despegando.
@@ -161,12 +163,13 @@ public class RecolectorControl : MonoBehaviour
     {
         var teclado = Keyboard.current;
         bool aturdido = salud != null && salud.Aturdido;
-        if (aturdido && Preparando)
+        bool sinControl = aturdido || Bloqueado;
+        if (sinControl && Preparando)
         {
             Cancelar();
         }
 
-        Horizontal = aturdido ? 0f : LeerHorizontal(teclado);
+        Horizontal = sinControl ? 0f : LeerHorizontal(teclado);
         animator.SetBool(Corriendo, Horizontal != 0f);
 
         // La escala negativa en x voltea el sprite y, con él, al punto de lanzamiento y a la mira.
@@ -185,7 +188,7 @@ public class RecolectorControl : MonoBehaviour
             saltosAereos = 0;
         }
 
-        if (teclado == null || aturdido)
+        if (teclado == null || sinControl)
         {
             return;
         }

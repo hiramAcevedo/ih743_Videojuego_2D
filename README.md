@@ -12,6 +12,7 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 2. En Unity Hub, entra a Projects > Add > Add project from disk y elige la carpeta clonada (la que contiene `Assets`, `Packages` y `ProjectSettings`).
 3. Ábrelo con Unity 6000.5.9f1. Usa la plantilla Universal 2D (URP) y el Input System. La primera importación genera `Library` y tarda unos minutos.
 4. Abre `Assets/Scenes/Calle.unity`, la escena principal y la primera de Build Settings, y presiona Play.
+5. Para que la partida se guarde en Firestore, pon tu configuración de Firebase en `Assets/StreamingAssets/firebase.json` (ver "Configurar Firebase" en la entrega 3.8). Sin ella el juego corre igual y el marcador avisa que no se guarda.
 
 ## Teclas
 
@@ -190,6 +191,59 @@ Medido con el juego en marcha y un teclado virtual, en 27 revisiones sin una fal
 - Las 8 se rompieron a 7.5 unidades de la mano, en su recta, a 1.93 unidades o más del borde de la vista, cada una con 15 pedazos y su destello. Contra un bloque de prueba con BoxCollider2D, que no está en el juego, se rompen en su cara y ninguna lo atraviesa.
 - Con 30 toques de F en 2 segundos salen 8, cada 16 cuadros: nunca antes de los 15 de la cadencia.
 - Al soltar F, RafagaFin en ese cuadro y Libre al terminar; no sale ninguna botella más. Un golpe corta la ráfaga en el cuadro siguiente y, aturdido o con F todavía sostenida, no sale ninguna. Con V cargando, F no lanza; la bolsa sale con su arco.
+
+## La conexión a base de datos (entrega 3.8)
+
+El juego guarda la partida en Cloud Firestore, la base de Firebase del tutorial de The power ups (2021). Como en el video, cada jugador es un usuario anónimo de Firebase Authentication (0:12) y su partida es un documento con su uid dentro de una colección: aquí `partidas/{uid}`, en el video `users` (12:57). El video usa el paquete de Firebase para Unity en Android; en escritorio, la guía de Firebase dice que ese paquete es beta y sólo para el desarrollo, así que la conexión va por la API REST de Firestore y de Firebase Authentication con `UnityWebRequest`, que funciona igual en el editor y en un ejecutable. Las monedas son las propinas, la moneda de peso de la 3.1, y los dos niveles son dos rutas del camión de la basura: cada una termina al alcanzarlo.
+
+**Cómo revisarlo.** El GIF y las tres imágenes de esta sección muestran la partida guardada y cargada con la base real. Sin configurar nada, el proyecto abre y se juega, pero no guarda. Para jugarlo con base basta un proyecto propio de Firebase en el plan gratuito; los cinco pasos están en "Configurar Firebase".
+
+![El recolector junta propinas en la ruta 1 y alcanza el camión, empieza la ruta 2, el juego se cierra y al volver a abrirlo la partida se carga de Firestore: la ruta 2 con 28 propinas, y una más llega a 29](docs/base-de-datos.gif)
+
+- **Jugar y juntar propinas.** La Ruta 1 es la calle de siempre (20 propinas, el camión en x = 60) y la Ruta 2, otra calle al atardecer (28 propinas, el camión en x = 80). Hay propinas a 1 unidad de la banqueta, que se toman corriendo; de 2.8 a 3.2, en arco, con un salto; y a 4.3, con el doble salto de la 3.4. Cada propina suma 1 al marcador de arriba a la derecha y se guarda. Al alcanzar el camión, "¡RUTA 1 COMPLETA!" y empieza la ruta 2.
+- **Lo que se guarda.** El documento `partidas/{uid}` trae `monedas` (el total), `nivelAlcanzado` (1 o 2) y, por ruta, `nivel1` y `nivel2` con `completado`, `monedas` y `tomadas`: los números de las propinas tomadas. El total es la suma de las tomadas, así que ninguna cuenta dos veces y, al volver a abrir, las tomadas ya no aparecen.
+- **Cerrar y volver a abrir.** Al abrir, un velo con "CARGANDO PARTIDA DE FIRESTORE..." cubre la calle y el recolector no se mueve mientras se lee el documento, como el snapshot del video (17:24). Con la partida, se juega la ruta alcanzada con su total en el marcador. Abajo a la izquierda, el marcador dice qué pasa con la base: partida nueva o cargada, guardado o sin conexión.
+- **El mismo jugador.** El token de renovación de la sesión anónima se guarda en el equipo (PlayerPrefs): al volver a abrir el juego, la sesión se renueva y es el mismo usuario con el mismo documento.
+- **Sin perder la partida.** Nunca se escribe antes de leer, para no pisar la partida de la nube con una vacía. Si la red falla, lee y escribe otra vez con una espera que crece hasta 30 segundos. Los cambios de un cuarto de segundo salen en una sola escritura y, al cerrar con una pendiente, el juego espera hasta 3 segundos a que termine.
+- **Reglas.** En el video la base se crea en modo de prueba (3:34), abierta a cualquiera y por 30 días. Aquí se creó en modo de producción con las reglas de `firestore.rules`: cada jugador sólo lee, escribe o borra su propia partida, y lo que escribe trae las monedas como entero no negativo y el nivel como 1 o 2.
+
+![Al abrir por primera vez, corriendo, con un salto, con el doble salto, al alcanzar el camión y en la ruta 2: el marcador sube de una en una](docs/base-de-datos-recorrido.png)
+
+![Antes de cerrar, 28 propinas en la ruta 2; al abrir, el velo mientras llega la partida; la partida cargada de Firestore, sin las 8 propinas ya tomadas; y una más, 29](docs/base-de-datos-cerrar-y-abrir.png)
+
+![El documento de la partida en la consola de Firestore: monedas 29, la ruta 1 completa con sus 20 propinas, la ruta 2 con 9 y nivelAlcanzado 2](docs/base-de-datos-firestore.png)
+
+### Configurar Firebase
+
+La llave de la app web no se sube al repositorio. Para jugar con tu propia base:
+
+1. En la consola de Firebase, crea un proyecto (el plan Spark, sin costo, alcanza).
+2. Firestore Database > Crear base de datos, edición Standard y modo de producción. En la pestaña Reglas, pega `firestore.rules` y publica.
+3. Authentication > Comenzar > Método de acceso > Anónimo: habilítalo.
+4. Configuración del proyecto > General > Tus apps > Web: registra una app y copia `apiKey` y `projectId` de su `firebaseConfig`.
+5. Copia `Assets/StreamingAssets/firebase.ejemplo.json` como `firebase.json` en la misma carpeta y pon ahí los dos valores. El archivo está en el `.gitignore`.
+
+Sin `firebase.json` el juego corre, junta propinas y pasa de ruta, y el marcador dice "SIN FIREBASE: LA PARTIDA NO SE GUARDA".
+
+- `Assets/Scripts/BaseDeDatos.cs` (nuevo): la conexión. Lee `firebase.json`, abre o renueva la sesión anónima (Identity Toolkit y Secure Token), lee el documento al abrir y lo crea si no existe, y escribe la partida completa con PATCH en el JSON de Firestore. Sobrevive a los cambios de escena (`DontDestroyOnLoad`) y avisa de su estado al marcador.
+- `Assets/Scripts/Partida.cs` (nuevo): la partida en memoria, con el total, el nivel alcanzado y las propinas tomadas por ruta.
+- `Assets/Scripts/GestorNiveles.cs` (nuevo): arma la ruta en juego con su calle, sus propinas sin las ya tomadas y el camión; pone el velo mientras se carga la partida, guarda cada propina y cada ruta completa, y pasa a la siguiente.
+- `Assets/Scripts/Nivel.cs` (nuevo), `Assets/Niveles/Ruta1.asset` y `Ruta2.asset`: cada ruta con su semilla de `CalleModular`, sus tintes, dónde está cada propina y dónde espera el camión.
+- `Assets/Scripts/Moneda.cs` y `Assets/Prefabs/Moneda.prefab` (nuevos): la propina que gira y flota, se toma con la cápsula del recolector y deja un destello. Las botellas y la bolsa la atraviesan.
+- `Assets/Scripts/Meta.cs` y `Assets/Prefabs/Meta.prefab` (nuevos): el camión de la basura con el letrero de META que flota sobre su parte de atrás.
+- `Assets/Scripts/Marcador.cs` y `Assets/Scripts/TextoPixel.cs` (nuevos): el marcador, hijo de la cámara, con la moneda y el total, la ruta, el estado de la base, los avisos grandes y el velo; las letras son pixel art de 4x5 hechas por código.
+- `Assets/Scripts/CalleModular.cs`: `Configurar`, para que cada ruta tenga su semilla y sus tintes. `Assets/Scripts/RecolectorControl.cs`: `Bloqueado`, para que no se mueva mientras se carga la partida o se cambia de ruta.
+- `Assets/Arte/Props/Moneda/` (4 cuadros de 16x16), `Assets/Arte/Props/camion.png` y `Assets/Arte/HUD/moneda.png` (nuevos): el arte de la 3.1. `Assets/Scenes/Calle.unity`: el objeto `Niveles` con `GestorNiveles` y `Marcador`.
+- `firestore.rules` y `Assets/StreamingAssets/firebase.ejemplo.json` (nuevos).
+
+Medido con el juego en marcha, un teclado virtual y una base de Firestore real, en 11 revisiones sin una falla y sin errores ni avisos en la consola:
+
+- Al abrir por primera vez, el velo con el recolector quieto, un usuario anónimo nuevo y su documento creado ("PARTIDA NUEVA EN FIRESTORE"): la ruta 1 con 20 propinas y 0 en el marcador.
+- La ruta 1 completa, 20 de 20 propinas, una a la vez y con el marcador siempre igual a la partida. En el camión, "¡RUTA 1 COMPLETA!" y la ruta 2: otra calle, 28 propinas y 20 en el marcador.
+- Con 8 propinas de la ruta 2, 28 en total. El documento, leído de la nube antes de cerrar después de 14 escrituras, era igual a la partida: 28 monedas, nivel alcanzado 2, la ruta 1 completa con sus 20 y la 2 con 8.
+- Al salir de Play y volver a entrar, que es cerrar el juego y abrirlo de nuevo: el mismo uid, una lectura de Firestore, la ruta 2, 28 en el marcador, 20 de las 28 propinas en la calle (faltan las 8 tomadas) y "PARTIDA CARGADA DE FIRESTORE: 28 PROPINAS, RUTA 2".
+- Una propina más: 29 en el juego y 29 en el documento de la nube.
+- Sin `firebase.json`, en otra prueba de 9 revisiones: el juego corre, junta las 20 propinas y pasa a la ruta 2; al volver a abrirlo, ruta 1 y 0 propinas, lo esperado sin base.
 
 ## Arte
 

@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e44538853c889402bad401608205d73b, type: 3}
+  m_Name: Ruta2
+  m_EditorClassIdentifier: Assembly-CSharp::Nivel
+  numero: 2
+  nombre: RUTA 2
+  semilla: 2026
+  tinteCielo: {r: 1, g: 0.7, b: 0.56, a: 1}
+  tinteCalle: {r: 0.96, g: 0.84, b: 0.8, a: 1}
+  xMeta: 80
+  monedas:
+  - {x: 6, y: 1}
+  - {x: 7, y: 1}
+  - {x: 8, y: 1}
+  - {x: 12, y: 2.8}
+  - {x: 13, y: 3.2}
+  - {x: 14, y: 2.8}
+  - {x: 19, y: 4.3}
+  - {x: 20, y: 4.3}
+  - {x: 25, y: 1}
+  - {x: 26, y: 1}
+  - {x: 27, y: 1}
+  - {x: 28, y: 1}
+  - {x: 33, y: 2.8}
+  - {x: 34, y: 3.2}
+  - {x: 35, y: 2.8}
+  - {x: 41, y: 4.3}
+  - {x: 46, y: 1}
+  - {x: 47, y: 1}
+  - {x: 48, y: 1}
+  - {x: 53, y: 2.8}
+  - {x: 54, y: 3.2}
+  - {x: 55, y: 2.8}
+  - {x: 61, y: 4.3}
+  - {x: 62, y: 4.3}
+  - {x: 67, y: 1}
+  - {x: 68, y: 1}
+  - {x: 69, y: 1}
+  - {x: 74, y: 3}

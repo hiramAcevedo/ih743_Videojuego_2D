@@ -7,6 +7,8 @@ using UnityEngine.Tilemaps;
 // Con la cámara quieta sólo llena la vista. Como la cámara sigue al recolector (CamaraSigue), la
 // calle avanza sin fin con este mismo código. El orden depende sólo de la semilla y de la posición
 // de cada fachada, así que al regresar aparecen las mismas fachadas en el mismo lugar.
+// Cada nivel (GestorNiveles) arma su calle con Configurar: otra semilla es otro orden de fachadas y el tinte cambia la
+// hora del día (la ruta 2 va al atardecer).
 [DisallowMultipleComponent]
 public class CalleModular : MonoBehaviour
 {
@@ -36,6 +38,12 @@ public class CalleModular : MonoBehaviour
     [Range(0f, 1f)] [SerializeField] float seguimientoCielo = 0.8f;
     [SerializeField] int ordenCielo = -20;
 
+    [Header("Tinte")]
+    [Tooltip("Color que multiplica al cielo. Blanco: como está dibujado.")]
+    [SerializeField] Color tinteCielo = Color.white;
+    [Tooltip("Color que multiplica a las fachadas y al suelo. Blanco: como están dibujados.")]
+    [SerializeField] Color tinteCalle = Color.white;
+
     [Header("Vista")]
     [SerializeField] Camera camara;
     [Tooltip("Unidades de mundo que se construyen de más a cada lado de la vista.")]
@@ -58,6 +66,8 @@ public class CalleModular : MonoBehaviour
     int refIndice, colMin, colMax;
     float refX;
     bool conSuelo, preparado;
+    Color fondoOriginal;
+    bool conFondo;
 
     void Start()
     {
@@ -69,6 +79,29 @@ public class CalleModular : MonoBehaviour
         if (!preparado) return;
         Vista(out float izq, out float der);
         Actualizar(izq, der);
+    }
+
+    public int Semilla => semilla;
+
+    // La calle de un nivel: su semilla y sus tintes. Se rearma desde cero con ellos. El fondo de la cámara (lo que se ve
+    // arriba del cielo) lleva el tinte del cielo.
+    public void Configurar(int nuevaSemilla, Color cielo, Color calle)
+    {
+        semilla = nuevaSemilla;
+        tinteCielo = cielo;
+        tinteCalle = calle;
+        if (suelo != null) suelo.color = tinteCalle;
+        var cam = camara != null ? camara : Camera.main;
+        if (cam != null)
+        {
+            if (!conFondo)
+            {
+                fondoOriginal = cam.backgroundColor;
+                conFondo = true;
+            }
+            cam.backgroundColor = fondoOriginal * tinteCielo;
+        }
+        Reconstruir();
     }
 
     // Arma la calle desde cero para la vista actual. En el editor deja la vista previa en la escena;
@@ -162,6 +195,7 @@ public class CalleModular : MonoBehaviour
         var sr = libres.Count > 0 ? libres.Pop() : NuevaPieza(contFachadas);
         var sprite = modulos[ModuloEn(indice)];
         sr.sprite = sprite;
+        sr.color = tinteCalle;
         sr.sortingOrder = ordenFachadas;
         sr.transform.position = new Vector3(x, baseFachadas, 0f);
         sr.gameObject.name = "Fachada " + indice + " " + sprite.name;
@@ -284,6 +318,7 @@ public class CalleModular : MonoBehaviour
             if (sr.gameObject.activeSelf != usar) sr.gameObject.SetActive(usar);
             if (!usar) continue;
             if (sr.sprite != cielo) sr.sprite = cielo;
+            sr.color = tinteCielo;
             sr.sortingOrder = ordenCielo;
             sr.transform.position = new Vector3(inicio + (k0 + j) * ancho, baseCielo, 0f);
             sr.gameObject.name = "Cielo " + (k0 + j);

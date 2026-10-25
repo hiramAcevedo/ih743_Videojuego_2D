@@ -1033,6 +1033,87 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1 &851501448
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 851501451}
+  - component: {fileID: 851501450}
+  - component: {fileID: 851501449}
+  m_Layer: 0
+  m_Name: Niveles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &851501449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851501448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2eb0d7b1d56ab4132b6c747c6b45f94c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Marcador
+  iconoMoneda: {fileID: 21300000, guid: 61f4d07d40b89441693333f310f0262f, type: 3}
+  pixel: {fileID: 21300000, guid: 15ee56ce335bf48b2bac0a0182a1d273, type: 3}
+  margen: 0.35
+  escala: 2
+  escalaCargando: 3
+  escalaAviso: 4
+  ordenDibujo: 200
+  colorTexto: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  colorMonedas: {r: 1, g: 0.8392157, b: 0.36078432, a: 1}
+  colorBase: {r: 0.6666667, g: 0.8862745, b: 1, a: 1}
+  colorAlerta: {r: 1, g: 0.5882353, b: 0.47058824, a: 1}
+  colorVelo: {r: 0.07, g: 0.04, b: 0.09, a: 0.72}
+  duracionSalto: 0.2
+--- !u!114 &851501450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851501448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2682988617a444fd6b51e47ceb4f92b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GestorNiveles
+  niveles:
+  - {fileID: 11400000, guid: 850aa2c4d3d0e4cbda7921730fa8e71f, type: 2}
+  - {fileID: 11400000, guid: 4644a02343a754f5c9eb2a229a3b2f32, type: 2}
+  calle: {fileID: 1090142514}
+  recolector: {fileID: 1061774500}
+  marcador: {fileID: 851501449}
+  prefabMoneda: {fileID: 4231804025020706968, guid: 0fc58511e970843c089bf727a389488d, type: 3}
+  prefabMeta: {fileID: 6785703916284988668, guid: 8dc23954781044e43af0163a1365bdb0, type: 3}
+  banqueta: 0
+  alturaMeta: -1.55
+  pausaAlCompletar: 2.5
+--- !u!4 &851501451
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851501448}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &901014867
 GameObject:
   m_ObjectHideFlags: 0
@@ -1486,6 +1567,8 @@ MonoBehaviour:
   origenCielo: -10
   seguimientoCielo: 0.8
   ordenCielo: -20
+  tinteCielo: {r: 1, g: 1, b: 1, a: 1}
+  tinteCalle: {r: 1, g: 1, b: 1, a: 1}
   camara: {fileID: 519420031}
   margen: 4
   aspectoMinimo: 1.7777778
@@ -2249,3 +2332,4 @@ SceneRoots:
   - {fileID: 1179687765}
   - {fileID: 1090142515}
   - {fileID: 1061774503}
+  - {fileID: 851501451}

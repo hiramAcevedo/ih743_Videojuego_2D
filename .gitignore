@@ -110,3 +110,7 @@ InitTestScene*.unity*
 ._*
 .idea/
 .vscode/
+
+# La configuración de Firebase (apiKey y projectId) no se sube: el modelo es firebase.ejemplo.json
+/Assets/StreamingAssets/firebase.json
+/Assets/StreamingAssets/firebase.json.meta

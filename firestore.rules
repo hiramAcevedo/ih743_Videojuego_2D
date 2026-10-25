@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// Las reglas publicadas en Cloud Firestore para el juego. Cada jugador es una sesión anónima de Firebase
+// Authentication y sólo puede leer, escribir o borrar su propia partida, partidas/{su uid}. Lo que escribe
+// tiene que traer las monedas como entero no negativo y el nivel alcanzado como 1 o 2.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /partidas/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.monedas is int
+        && request.resource.data.monedas >= 0
+        && request.resource.data.nivelAlcanzado in [1, 2];
+    }
+  }
+}
