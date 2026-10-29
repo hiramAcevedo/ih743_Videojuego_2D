@@ -1,15 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-// Los dos niveles del juego (dos rutas del camión de la basura) y la partida guardada en Firestore (BaseDeDatos).
-//   Al abrir el juego, el recolector espera quieto bajo el velo de "cargando partida" mientras se lee la partida. Con ella
-//   se juega el nivel alcanzado: si no es el de la escena, la escena se vuelve a cargar con ese.
+// Los dos niveles del juego (dos rutas del camión de la basura), la partida guardada en Firestore (BaseDeDatos) y los
+// menús (MenuJuego).
+//   Al abrir el juego se ve el menú de inicio sobre la calle, con el recolector quieto, mientras se lee la partida.
+//   NUEVA PARTIDA la deja en cero y empieza en la ruta 1; CONTINUAR sigue en el nivel alcanzado: si no es el de la escena,
+//   la escena se vuelve a cargar con ese. SALIR cierra el programa.
 //   Al armar un nivel: su calle (semilla y tinte), sus propinas menos las que ya se tomaron y el camión de la meta.
 //   Al jugar: cada propina suma en el marcador y se guarda; al alcanzar el camión el nivel queda completo, se guarda, se
-//   avisa en grande y, si hay otro nivel, se pasa a él recargando la escena. El nivel en juego sobrevive a esa recarga
-//   (es estático); al cerrar el juego se pierde, y al abrirlo lo vuelve a decidir la partida de la base.
+//   avisa en grande y, si hay otro nivel, se pasa a él recargando la escena. Al completar el último, el menú del final:
+//   JUGAR DE NUEVO, MENÚ PRINCIPAL o SALIR. Esc detiene el juego y abre la pausa. El nivel en juego y si la escena empieza
+//   con el menú sobreviven a las recargas (son estáticos); al cerrar el juego se pierden, y al abrirlo vuelve el menú.
 [DefaultExecutionOrder(-200)]
 public class GestorNiveles : MonoBehaviour
 {
@@ -24,19 +28,24 @@ public class GestorNiveles : MonoBehaviour
     [SerializeField] float banqueta = 0f;
     [Tooltip("Altura de las llantas del camión de la meta, en el asfalto, delante de la banqueta.")]
     [SerializeField] float alturaMeta = -1.55f;
-    [Tooltip("Segundos que se ve el aviso de nivel completo antes de pasar al siguiente.")]
+    [Tooltip("Segundos que se ve el aviso de nivel completo antes de pasar al siguiente (y, en el último, antes del menú del final).")]
     [SerializeField] float pausaAlCompletar = 2.5f;
 
     static int nivelEnJuego = 1;
     // Lo que se avisa al terminar de cargar la partida, aunque haya que recargar la escena para ir al nivel alcanzado.
     static string avisoDeCarga;
+    // Si la escena empieza con el menú de inicio: al abrir el juego y al volver a él desde la pausa o el final.
+    static bool conMenu = true;
     const float DuracionAvisoDeCarga = 5f;
 
     readonly List<Moneda> monedas = new List<Moneda>();
     BaseDeDatos bd;
+    MenuJuego menu;
     Nivel nivel;
     Meta meta;
     bool cambiando;
+    // El cuadro en que se cerró un menú: la misma Esc que cerró la pausa no la vuelve a abrir.
+    int cuadroMenuCerrado = -1;
     // Mientras se ve el aviso de carga, un "guardado" no lo tapa (la partida nueva se escribe en cuanto se crea).
     float finAvisoDeCarga = -1f;
 
@@ -47,6 +56,7 @@ public class GestorNiveles : MonoBehaviour
     public Meta MetaActual => meta;
     public Marcador Marcador => marcador;
     public float Banqueta => banqueta;
+    public MenuJuego Menu => menu;
     public static int NivelEnJuego => nivelEnJuego;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -54,6 +64,7 @@ public class GestorNiveles : MonoBehaviour
     {
         nivelEnJuego = 1;
         avisoDeCarga = null;
+        conMenu = true;
     }
 
     void Awake()
@@ -67,6 +78,7 @@ public class GestorNiveles : MonoBehaviour
         {
             recolector.Bloqueado = true;
         }
+        menu = gameObject.AddComponent<MenuJuego>();
     }
 
     IEnumerator Start()
@@ -74,18 +86,34 @@ public class GestorNiveles : MonoBehaviour
         bd = BaseDeDatos.Asegurar();
         bd.AlCambiar += AlCambiarBase;
         marcador.Nivel(nivel.nombre);
-        if (bd.Partida == null)
+        menu.Preparar(marcador);
+        AlCambiarBase(bd.EstadoActual);
+        // La partida se lee de Firestore mientras se ve el menú de inicio (o, sin menú, bajo el velo de carga).
+        bd.Leer();
+        if (conMenu)
         {
-            marcador.Cargando(bd.Configurada ? "CARGANDO PARTIDA DE FIRESTORE..." : "PREPARANDO LA RUTA...");
-            AlCambiarBase(bd.EstadoActual);
-            yield return bd.Cargar();
-            var p = bd.Partida;
-            if (bd.Configurada)
+            var opcion = MenuJuego.Opcion.Ninguna;
+            yield return menu.Mostrar(MenuJuego.Tipo.Inicio, o => opcion = o);
+            cuadroMenuCerrado = Time.frameCount;
+            if (opcion == MenuJuego.Opcion.Salir)
             {
-                avisoDeCarga = bd.Nueva ? "PARTIDA NUEVA EN FIRESTORE"
-                    : "PARTIDA CARGADA DE FIRESTORE: " + p.Monedas + (p.Monedas == 1 ? " PROPINA, " : " PROPINAS, ") + (Buscar(p.nivelAlcanzado)?.nombre ?? "RUTA " + p.nivelAlcanzado);
+                Salir();
+                yield break;
+            }
+            conMenu = false;
+            yield return Esperar();
+            var p = bd.Partida;
+            if (opcion == MenuJuego.Opcion.NuevaPartida)
+            {
+                bd.PartidaNueva();
+                avisoDeCarga = bd.Configurada ? "PARTIDA NUEVA EN FIRESTORE" : null;
+            }
+            else if (bd.Configurada)
+            {
+                avisoDeCarga = "PARTIDA CARGADA DE FIRESTORE: " + p.Monedas + (p.Monedas == 1 ? " PROPINA, " : " PROPINAS, ") + (Buscar(p.nivelAlcanzado)?.nombre ?? "RUTA " + p.nivelAlcanzado);
             }
         }
+        yield return Esperar();
         var partida = bd.Partida;
         if (partida.nivelAlcanzado != nivelEnJuego && Buscar(partida.nivelAlcanzado) != null)
         {
@@ -107,12 +135,117 @@ public class GestorNiveles : MonoBehaviour
         {
             AlCambiarBase(bd.EstadoActual);
         }
-        if (partida.Nivel(nivel.numero).completado && Buscar(nivel.numero + 1) == null)
-        {
-            marcador.Aviso("¡LAS DOS RUTAS COMPLETAS!", 4f);
-        }
         recolector.Bloqueado = false;
         Listo = true;
+        // Una partida que ya tenía las dos rutas completas: directo al menú del final.
+        if (partida.Nivel(nivel.numero).completado && Buscar(nivel.numero + 1) == null)
+        {
+            StartCoroutine(Terminar());
+        }
+    }
+
+    // Hasta que la partida esté leída, bajo el velo de carga.
+    IEnumerator Esperar()
+    {
+        if (bd.Partida != null)
+        {
+            yield break;
+        }
+        marcador.Cargando(bd.Configurada ? "CARGANDO PARTIDA DE FIRESTORE..." : "PREPARANDO LA RUTA...");
+        while (bd.Partida == null)
+        {
+            yield return null;
+        }
+    }
+
+    // Esc mientras se juega: la pausa.
+    void Update()
+    {
+        // Con el menú de inicio abierto, el marcador de atrás muestra las propinas de la partida guardada, como la nota.
+        if (menu.Abierto && menu.TipoActual == MenuJuego.Tipo.Inicio && bd != null && bd.Partida != null)
+        {
+            marcador.Monedas(bd.Partida.Monedas);
+        }
+        if (!Listo || cambiando || menu.Abierto || Time.frameCount == cuadroMenuCerrado)
+        {
+            return;
+        }
+        var teclado = Keyboard.current;
+        if (teclado != null && teclado.escapeKey.wasPressedThisFrame)
+        {
+            StartCoroutine(Pausa());
+        }
+    }
+
+    IEnumerator Pausa()
+    {
+        recolector.Bloqueado = true;
+        Time.timeScale = 0f;
+        var opcion = MenuJuego.Opcion.Ninguna;
+        yield return menu.Mostrar(MenuJuego.Tipo.Pausa, o => opcion = o);
+        Time.timeScale = 1f;
+        cuadroMenuCerrado = Time.frameCount;
+        if (opcion == MenuJuego.Opcion.MenuPrincipal)
+        {
+            IrAlMenu();
+        }
+        else if (opcion == MenuJuego.Opcion.Salir)
+        {
+            Salir();
+        }
+        else
+        {
+            // Un cuadro después: la tecla que cerró el menú (Enter o la barra espaciadora) no hace saltar al recolector.
+            yield return null;
+            recolector.Bloqueado = false;
+        }
+    }
+
+    // Las dos rutas completas: el aviso en grande y, después, el menú del final.
+    IEnumerator Terminar()
+    {
+        cambiando = true;
+        recolector.Bloqueado = true;
+        marcador.Aviso("¡LAS DOS RUTAS COMPLETAS!", pausaAlCompletar);
+        yield return new WaitForSeconds(pausaAlCompletar);
+        marcador.Aviso(null, 0f);
+        var opcion = MenuJuego.Opcion.Ninguna;
+        yield return menu.Mostrar(MenuJuego.Tipo.Fin, o => opcion = o);
+        cuadroMenuCerrado = Time.frameCount;
+        if (opcion == MenuJuego.Opcion.JugarDeNuevo)
+        {
+            bd.PartidaNueva();
+            avisoDeCarga = bd.Configurada ? "PARTIDA NUEVA EN FIRESTORE" : null;
+            nivelEnJuego = 1;
+            conMenu = false;
+            SceneManager.LoadScene(gameObject.scene.buildIndex);
+        }
+        else if (opcion == MenuJuego.Opcion.MenuPrincipal)
+        {
+            IrAlMenu();
+        }
+        else
+        {
+            Salir();
+        }
+    }
+
+    // De vuelta al menú de inicio, sobre la calle del nivel en juego.
+    void IrAlMenu()
+    {
+        conMenu = true;
+        SceneManager.LoadScene(gameObject.scene.buildIndex);
+    }
+
+    // Cierra el programa, como el script de pausa del video de apoyo. Si hay algo sin guardar, BaseDeDatos espera a que se
+    // escriba (hasta 3 s). En el editor sólo se sale de Play.
+    void Salir()
+    {
+        Debug.Log("SALIR: Application.Quit");
+        Application.Quit();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 
     void OnDestroy()
@@ -165,7 +298,7 @@ public class GestorNiveles : MonoBehaviour
         var siguiente = Buscar(nivel.numero + 1);
         if (siguiente == null)
         {
-            marcador.Aviso("¡LAS DOS RUTAS COMPLETAS!", 4f);
+            StartCoroutine(Terminar());
             return;
         }
         StartCoroutine(Pasar(siguiente));

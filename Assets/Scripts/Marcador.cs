@@ -32,6 +32,7 @@ public class Marcador : MonoBehaviour
     float finEstado = -1f, finAviso = -1f, finSalto = -1f;
     int total = -1;
 
+    public Sprite Pixel => pixel;
     public Color ColorBase => colorBase;
     public Color ColorAlerta => colorAlerta;
     public string TextoMonedas => monedas != null ? monedas.Texto : "";

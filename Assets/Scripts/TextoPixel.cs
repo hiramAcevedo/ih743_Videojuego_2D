@@ -227,6 +227,9 @@ public class TextoPixel : MonoBehaviour
             ['+'] = new[] { "...", ".#.", "###", ".#.", "..." },
             ['·'] = new[] { ".", ".", "#", ".", "." },
             ['↓'] = new[] { "..#..", "..#..", "#.#.#", ".###.", "..#.." },
+            // Las flechas que marcan la opción elegida en los menús.
+            ['>'] = new[] { "#..", ".#.", "..#", ".#.", "#.." },
+            ['<'] = new[] { "..#", ".#.", "#..", ".#.", "..#" },
         };
         var letras = new Dictionary<char, string[]>();
         foreach (var par in basicas)

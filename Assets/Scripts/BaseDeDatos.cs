@@ -16,10 +16,12 @@ using UnityEngine.Networking;
 //   Qué se guarda. El documento partidas/{uid}: monedas (el total), nivelAlcanzado, y nivel1 y nivel2, cada uno con
 //   completado, monedas y tomadas (los números de las propinas que ya se tomaron), más la hora de la última escritura.
 //   Las reglas de Firestore (firestore.rules) sólo dejan a cada usuario leer y escribir su propio documento.
-//   Cuándo. Al abrir el juego se lee (GET). Cada propina y cada nivel completo se escriben (PATCH, el documento entero),
-//   juntando en una escritura lo que pase en un cuarto de segundo. Si se cierra el juego con algo sin guardar, se espera
-//   a que termine (hasta 3 s). Sin conexión se reintenta, cada vez más espaciado; y nunca se escribe antes de haber leído,
-//   para no pisar con una partida vacía la que está en la nube.
+//   Cuándo. Al abrir el juego se lee (GET), mientras se ve el menú de inicio. Cada propina y cada nivel completo se
+//   escriben (PATCH, el documento entero), juntando en una escritura lo que pase en un cuarto de segundo. Si se cierra el
+//   juego con algo sin guardar, se espera a que termine (hasta 3 s). Sin conexión se reintenta, cada vez más espaciado; y
+//   nunca se escribe antes de haber leído, para no pisar con una partida vacía la que está en la nube. NUEVA PARTIDA y
+//   JUGAR DE NUEVO reemplazan el documento por una partida en cero (el mismo jugador, el mismo documento), también sólo
+//   después de haberlo leído.
 //   Configuración. Assets/StreamingAssets/firebase.json con apiKey y projectId del proyecto de Firebase. No se sube al
 //   repositorio (.gitignore); el modelo es firebase.ejemplo.json. Sin ese archivo el juego corre igual, sin guardar, y el
 //   marcador lo dice.
@@ -71,7 +73,7 @@ public class BaseDeDatos : MonoBehaviour
     Config config;
     string idToken, tokenRenovar;
     float venceToken;
-    bool pendiente, escribiendo, saliendo, puedeSalir;
+    bool pendiente, escribiendo, saliendo, puedeSalir, leyendo;
 
     // Si el editor entra a Play sin recargar el dominio, que no quede la de la vez anterior.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -181,6 +183,34 @@ public class BaseDeDatos : MonoBehaviour
             yield return new WaitForSecondsRealtime(espera);
             espera = Mathf.Min(espera * 2f, 30f);
         }
+    }
+
+    // Empieza a leer la partida sin esperarla (el menú de inicio la muestra cuando llega). Una sola lectura a la vez.
+    public void Leer()
+    {
+        if (Partida == null && !leyendo)
+        {
+            StartCoroutine(LeerUnaVez());
+        }
+    }
+
+    IEnumerator LeerUnaVez()
+    {
+        leyendo = true;
+        yield return Cargar();
+        leyendo = false;
+    }
+
+    // La partida vuelve a cero y así se guarda. Sólo con la partida ya leída, para no escribir a ciegas sobre la nube.
+    public void PartidaNueva()
+    {
+        if (Partida == null)
+        {
+            return;
+        }
+        Partida = new Partida();
+        Debug.Log("Firestore: partida nueva en " + (Configurada ? RutaDocumento : "este equipo (sin base)"));
+        Guardar();
     }
 
     // Pide guardar la partida. Lo que cambie en el siguiente cuarto de segundo sale en la misma escritura.

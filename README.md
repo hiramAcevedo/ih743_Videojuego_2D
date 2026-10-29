@@ -13,6 +13,7 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 3. Ábrelo con Unity 6000.5.9f1. Usa la plantilla Universal 2D (URP) y el Input System. La primera importación genera `Library` y tarda unos minutos.
 4. Abre `Assets/Scenes/Calle.unity`, la escena principal y la primera de Build Settings, y presiona Play.
 5. Para que la partida se guarde en Firestore, pon tu configuración de Firebase en `Assets/StreamingAssets/firebase.json` (ver "Configurar Firebase" en la entrega 3.8). Sin ella el juego corre igual y el marcador avisa que no se guarda.
+6. Para compilar el ejecutable, que corre sin el editor, ve "El ejecutable y los menús" en la entrega 3.9.
 
 ## Teclas
 
@@ -25,6 +26,9 @@ Proyecto de Unity de la unidad 3 de Optativa Abierta III. Un recolector de basur
 | V (sostenida) | Carga la bolsa sin dejar de correr: aparece la mira y se llena la barra de fuerza; las flechas arriba y abajo, o W y S, suben y bajan la mira (desde la entrega 3.6) |
 | V (al soltar) | Lanza la bolsa hacia la mira con la fuerza de la barra: en la franja verde, tiro perfecto; en el tramo rojo se rompe en la mano, y si se queda en rojo revienta y quita un corazón |
 | F (sostenida) | Ráfaga de botellas sin dejar de correr ni de saltar: una cada 0.25 segundos, rectas hacia donde mira, que se rompen en vidrios a 7.5 unidades o al chocar (desde la entrega 3.7; en la 3.6, F era el swing) |
+| Esc | Detiene el juego y abre la pausa; otra vez, vuelve al juego (desde la entrega 3.9) |
+| En un menú: flechas arriba y abajo, o W y S | Cambian la opción elegida (desde la entrega 3.9) |
+| En un menú: Enter o barra espaciadora | Elige la opción; también se elige con un clic del ratón (desde la entrega 3.9) |
 
 ## La escena y el personaje (entrega 3.1)
 
@@ -244,6 +248,43 @@ Medido con el juego en marcha, un teclado virtual y una base de Firestore real, 
 - Al salir de Play y volver a entrar, que es cerrar el juego y abrirlo de nuevo: el mismo uid, una lectura de Firestore, la ruta 2, 28 en el marcador, 20 de las 28 propinas en la calle (faltan las 8 tomadas) y "PARTIDA CARGADA DE FIRESTORE: 28 PROPINAS, RUTA 2".
 - Una propina más: 29 en el juego y 29 en el documento de la nube.
 - Sin `firebase.json`, en otra prueba de 9 revisiones: el juego corre, junta las 20 propinas y pasa a la ruta 2; al volver a abrirlo, ruta 1 y 0 propinas, lo esperado sin base.
+
+## El ejecutable y los menús (entrega 3.9)
+
+El juego ya se compila como una aplicación que corre sola, sin el editor de Unity, y abre con un menú de inicio. Como en el video de apoyo (Academia de Videojuegos, 2015), el ejecutable sale de las escenas de la lista de compilación y de la plataforma del equipo: aquí es macOS, así que el resultado es `El recolector.app`, universal (Intel y Apple silicon), de unos 120 MB. La carpeta `Builds/` no se sube al repositorio.
+
+**Cómo compilarlo.** En Unity, Recolector > Construir el ejecutable para macOS, o File > Build Profiles con la plataforma macOS y Build (en el video, Build Settings). El menú lo agrega `Assets/Editor/Construir.cs`, que también corre desde la terminal:
+
+```
+Unity -batchmode -quit -projectPath <carpeta del proyecto> -executeMethod Construir.MacOS
+```
+
+Para que el ejecutable guarde la partida, `Assets/StreamingAssets/firebase.json` tiene que existir al compilar (ver "Configurar Firebase" en la entrega 3.8). Sin ese archivo el ejecutable corre igual y el menú avisa que la partida no se guarda.
+
+![Los tres menús: el de inicio con la partida guardada, la pausa con Esc y el del final con las dos rutas completas](docs/menus.png)
+
+- **Menú de inicio.** Al abrir, sobre la calle y con el recolector quieto: NUEVA PARTIDA, CONTINUAR y SALIR. Debajo del título dice lo que hay guardado en Firestore ("PARTIDA GUARDADA: RUTA 1 · 6 PROPINAS" o "SIN PARTIDA GUARDADA"), y la partida se lee mientras tanto. NUEVA PARTIDA la deja en cero, con el mismo jugador y el mismo documento, y empieza en la ruta 1; CONTINUAR, que sólo se puede elegir cuando hay avance, sigue en la ruta alcanzada sin las propinas ya tomadas.
+- **Pausa.** Esc detiene el juego (el tiempo queda en cero) y abre CONTINUAR, MENÚ PRINCIPAL y SALIR. Esc otra vez vuelve al juego.
+- **Final.** Al alcanzar el camión de la ruta 2, "¡LAS DOS RUTAS COMPLETAS!" y el menú del final con el total de propinas: JUGAR DE NUEVO (una partida nueva desde la ruta 1), MENÚ PRINCIPAL y SALIR.
+- **Salir.** SALIR cierra el programa con `Application.Quit`, como el script de pausa del video. Si queda una escritura pendiente en Firestore, el juego espera hasta 3 segundos a que termine. En el editor sólo sale de Play.
+- **Cómo se elige.** Con las flechas arriba y abajo (o W y S) y Enter (o la barra espaciadora), o con el ratón: señalar la opción y hacer clic. La opción elegida va en dorado y entre flechas; la que todavía no se puede elegir, en gris.
+
+- `Assets/Scripts/MenuJuego.cs` (nuevo): los tres menús, dibujados como el marcador (texto `TextoPixel` y un velo, hijos de la cámara), con el teclado y el ratón del Input System.
+- `Assets/Scripts/GestorNiveles.cs`: el menú de inicio al abrir el juego y al volver del menú principal, la pausa con Esc, el menú del final y la salida.
+- `Assets/Scripts/BaseDeDatos.cs`: `Leer`, que empieza a leer la partida mientras se ve el menú, y `PartidaNueva`, que la deja en cero sólo después de haberla leído.
+- `Assets/Scripts/Marcador.cs` y `Assets/Scripts/TextoPixel.cs`: el píxel del velo para el menú y las flechas `>` y `<` de la opción elegida.
+- `Assets/Editor/Construir.cs` (nuevo): Recolector > Construir el ejecutable para macOS.
+- `ProjectSettings/ProjectSettings.asset`: el nombre del producto, El recolector, que es el de la aplicación y su ventana, y su identificador.
+
+Medido con el juego en marcha, un teclado y un ratón virtuales y la base real, en 14 revisiones sin una falla y sin errores ni avisos en la consola:
+
+- Al abrir, el menú de inicio con el recolector quieto. Mientras se lee la partida dice "LEYENDO LA PARTIDA DE FIRESTORE..."; con un jugador nuevo, "SIN PARTIDA GUARDADA", y CONTINUAR va en gris: la flecha abajo se lo salta.
+- NUEVA PARTIDA con un clic del ratón: la ruta 1 con sus 20 propinas, 0 en el marcador y "PARTIDA NUEVA EN FIRESTORE".
+- En la pausa el recolector no avanza aunque se sostenga la flecha. Esc vuelve al juego, y elegir CONTINUAR con la barra espaciadora no lo hace saltar.
+- Pausa > MENÚ PRINCIPAL con 6 propinas: "PARTIDA GUARDADA: RUTA 1 · 6 PROPINAS" y CONTINUAR ya se puede elegir. Con él, la ruta 1 con 6 en el marcador y 14 de las 20 propinas en la calle.
+- Al alcanzar los dos camiones, el aviso y el menú del final. JUGAR DE NUEVO deja la partida en cero, también en el documento de la nube.
+- SALIR desde la pausa y desde el menú de inicio: las dos veces el juego pidió cerrar.
+- El ejecutable, abierto fuera del editor, creó su jugador anónimo y su documento en Firestore.
 
 ## Arte
 
