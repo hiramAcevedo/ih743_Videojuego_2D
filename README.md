@@ -251,12 +251,18 @@ Medido con el juego en marcha, un teclado virtual y una base de Firestore real, 
 
 ## El ejecutable y los menús (entrega 3.9)
 
-El juego ya se compila como una aplicación que corre sola, sin el editor de Unity, y abre con un menú de inicio. Como en el video de apoyo (Academia de Videojuegos, 2015), el ejecutable sale de las escenas de la lista de compilación y de la plataforma del equipo: aquí es macOS, así que el resultado es `El recolector.app`, universal (Intel y Apple silicon), de unos 120 MB. La carpeta `Builds/` no se sube al repositorio.
+El juego ya se compila como una aplicación que corre sola, sin el editor de Unity, y abre con un menú de inicio. Como en el video de apoyo (Academia de Videojuegos, 2015), el ejecutable sale de las escenas de la lista de compilación y de la plataforma elegida: para macOS, `El recolector.app`, universal (Intel y Apple silicon); para Windows, `El recolector.exe` con su carpeta de datos. La carpeta `Builds/` no se sube al repositorio.
 
-**Cómo compilarlo.** En Unity, Recolector > Construir el ejecutable para macOS, o File > Build Profiles con la plataforma macOS y Build (en el video, Build Settings). El menú lo agrega `Assets/Editor/Construir.cs`, que también corre desde la terminal:
+**Descargarlo.** Los dos ejecutables están, comprimidos en .zip, en la release de la entrega 3.9 (Releases > act-3.9). Traen la configuración de Firebase del proyecto, así que la partida se guarda en su base; el repositorio no la trae.
+
+- **macOS:** descomprime y abre `El recolector.app`. Como la aplicación no está firmada con una cuenta de desarrollador de Apple, la primera vez macOS la detiene: clic derecho > Abrir, o Ajustes del Sistema > Privacidad y seguridad > Abrir de todos modos.
+- **Windows:** descomprime la carpeta completa y abre `El recolector.exe`; los demás archivos y carpetas (`El recolector_Data`, `UnityPlayer.dll`, `MonoBleedingEdge` y los otros) tienen que quedar junto a él. Si Windows muestra "Windows protegió su PC", Más información > Ejecutar de todas formas.
+
+**Cómo compilarlo.** En Unity, Recolector > Construir el ejecutable para macOS (o para Windows), o File > Build Profiles con la plataforma y Build (en el video, Build Settings). El menú lo agrega `Assets/Editor/Construir.cs`, que también corre desde la terminal; Windows necesita el módulo Windows Build Support (Mono) de Unity Hub:
 
 ```
 Unity -batchmode -quit -projectPath <carpeta del proyecto> -executeMethod Construir.MacOS
+Unity -batchmode -quit -projectPath <carpeta del proyecto> -executeMethod Construir.Windows
 ```
 
 Para que el ejecutable guarde la partida, `Assets/StreamingAssets/firebase.json` tiene que existir al compilar (ver "Configurar Firebase" en la entrega 3.8). Sin ese archivo el ejecutable corre igual y el menú avisa que la partida no se guarda.
@@ -273,7 +279,7 @@ Para que el ejecutable guarde la partida, `Assets/StreamingAssets/firebase.json`
 - `Assets/Scripts/GestorNiveles.cs`: el menú de inicio al abrir el juego y al volver del menú principal, la pausa con Esc, el menú del final y la salida.
 - `Assets/Scripts/BaseDeDatos.cs`: `Leer`, que empieza a leer la partida mientras se ve el menú, y `PartidaNueva`, que la deja en cero sólo después de haberla leído.
 - `Assets/Scripts/Marcador.cs` y `Assets/Scripts/TextoPixel.cs`: el píxel del velo para el menú y las flechas `>` y `<` de la opción elegida.
-- `Assets/Editor/Construir.cs` (nuevo): Recolector > Construir el ejecutable para macOS.
+- `Assets/Editor/Construir.cs` (nuevo): Recolector > Construir el ejecutable para macOS y para Windows.
 - `ProjectSettings/ProjectSettings.asset`: el nombre del producto, El recolector, que es el de la aplicación y su ventana, y su identificador.
 
 Medido con el juego en marcha, un teclado y un ratón virtuales y la base real, en 14 revisiones sin una falla y sin errores ni avisos en la consola:
